@@ -4,7 +4,7 @@ Orchestrator memory across restarts. Statuses: `todo · in-progress · merged ·
 
 | ID | Title | Branch | Status | PR | CI | QA | Attempts | Merged (UTC) | Notes |
 |---|---|---|---|---|---|---|---:|---|---|
-| PR-01 | Scaffold, tooling, CI | pr/01-scaffold | todo | | | | 0 | | |
+| PR-01 | Scaffold, tooling, CI | pr/01-scaffold | in-progress | local | | | 1 | | |
 | PR-02 | Settings, errors, observability, data | pr/02-settings-data | todo | | | | 0 | | |
 | PR-03 | Chunking, embeddings, ingestion | pr/03-ingestion | todo | | | | 0 | | |
 | PR-04 | Hybrid retrieval | pr/04-retrieval | todo | | | | 0 | | |
