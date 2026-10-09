@@ -24,6 +24,30 @@ environment variable names are in `.env.example`. `make doctor` shows what is co
 Data: development and CI use the synthetic [`tests/fixtures/movies_sample.csv`](tests/fixtures/README.md); the real
 dataset and its licence are described in [`docs/DATASET.md`](docs/DATASET.md).
 
+## Ingestion
+
+```bash
+make up                  # Qdrant on :6333
+make ingest              # downloaded dataset if data/raw has it, otherwise the synthetic fixture (with a warning)
+make ingest FIXTURE=1    # force the fixture;  CSV=path/to.csv ingests another file;  RECREATE=1 rebuilds the collection
+```
+
+* **Chunks.** Plots are cut at sentence boundaries into passages of about `ingest.chunk_tokens` (250) tokens with
+  `ingest.chunk_overlap` (40) tokens of shared trailing sentences; a plot at or under the budget stays whole. A *token*
+  is a WordPiece token of the dense model (`BAAI/bge-small-en-v1.5`), without `[CLS]`/`[SEP]`. The budget covers the
+  plot text; every chunk additionally gets the header `Title (Year) | Genre | Director` prepended before embedding.
+* **Points.** One point per chunk with named vectors `dense` (384, cosine) and `bm25` (sparse, `Modifier.IDF`), id
+  `uuid5(movie_id:chunk_idx)`, written in batches of `ingest.batch_size` (256). Payload: `movie_id`, `title`,
+  `release_year`, `director`, `cast`, `genre`, `origin`, `wiki_page`, `chunk_idx`, `n_chunks`, `text`; chunk 0 also
+  carries `full_plot` (what `get_movie` reads, by id). Payload indexes: `release_year` (integer), `origin`, `genre`,
+  `movie_id` (keyword).
+* **Re-runs.** Ids that already exist are skipped before embedding, so a re-run (or a resume after a crash) is cheap and
+  leaves the point count unchanged. Changed chunking parameters or data need `RECREATE=1`.
+* **Output.** Rows read/dropped, films, chunks total/written/skipped, points in Qdrant (read back) and elapsed time,
+  logged and printed; one LangSmith run per ingest when `LANGSMITH_TRACING=true` and a key is set.
+* **Models** are downloaded on first use into FastEmbed's cache (`FASTEMBED_CACHE_PATH`, default
+  `<tmp>/fastembed_cache`).
+
 ## Make targets
 
 | Target | What it does | Status |
@@ -37,7 +61,7 @@ dataset and its licence are described in [`docs/DATASET.md`](docs/DATASET.md).
 | `up` / `down` | start / stop Qdrant via docker compose | ready |
 | `download` | fetch the Kaggle CSV into `data/raw/`; without credentials prints what to set and exits 2 (`FORCE=1` re-downloads) | ready |
 | `doctor` | report on Docker, Qdrant, dataset, credentials and model ids with next steps; always exits 0 | ready |
-| `ingest` | chunk, embed and upsert into Qdrant | PR-03 |
+| `ingest` | chunk, embed and upsert into Qdrant; downloaded dataset if present, else the fixture (`FIXTURE=1` forces it, `CSV=path`, `RECREATE=1`) | ready |
 | `demo` | `up` + `ingest` on the fixture + sample queries | PR-04 |
 | `serve` | MCP server | PR-05 |
 | `ask` | CLI agent | PR-06 |
