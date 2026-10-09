@@ -5,11 +5,13 @@ description = "Movie-discovery RAG agent that answers fuzzy plot questions with 
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "fastembed>=0.7",
     "httpx>=0.28.1",
     "langsmith>=0.14.7",
     "pydantic>=2.14.0",
     "pydantic-settings>=2.15.0",
     "pyyaml>=6.0.3",
+    "qdrant-client>=1.15,<1.16",
 ]
 
 [project.optional-dependencies]

@@ -41,6 +41,7 @@ class _Section(BaseModel):
 class QdrantConfig(_Section):
     url: str
     collection: str
+    timeout_s: int = Field(gt=0)
 
 
 class EmbeddingsConfig(_Section):
