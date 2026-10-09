@@ -38,14 +38,13 @@ extend-exclude = ["data", "logs"]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-# Human/orchestrator-owned hook scripts and their tests are lint-checked but not reformatted.
-".claude/hooks/*.py" = ["E501", "E701", "E702", "SIM", "RUF", "UP", "C4"]
-"tests/hooks/*.py" = ["E501", "E701", "E702", "E741", "SIM", "RUF", "UP", "C4", "B"]
+# Protected hook scripts (.claude/**) cannot be edited by the builder; ignore only what actually fires there.
+".claude/hooks/*.py" = ["E501", "SIM114", "RUF005", "UP017", "C420"]
 
 [tool.ruff.format]
-# Protected hook scripts (.claude/**) cannot be edited by the builder, so they are not reformatted;
-# markdown (skills, docs) holds illustrative snippets, not code to format.
-exclude = [".claude/hooks/*.py", "tests/hooks/*.py", "*.md"]
+# Protected hook scripts (.claude/**) cannot be edited by the builder, so they are not reformatted.
+# Markdown under .claude (skills) holds illustrative snippets, not code to format.
+exclude = [".claude/hooks/*.py", ".claude/**/*.md"]
 
 [tool.mypy]
 python_version = "3.12"

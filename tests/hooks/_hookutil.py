@@ -24,9 +24,11 @@ def load_hook(name: str) -> ModuleType:
 def git(repo: Path, *args: str) -> str:
     return subprocess.run(
         ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", *args],
-        cwd=repo, check=True, capture_output=True, text=True,
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.strip()
-
 
 
 def event(tool: str, role: str | None = None, cwd: Path | None = None, **tool_input: Any) -> dict[str, Any]:

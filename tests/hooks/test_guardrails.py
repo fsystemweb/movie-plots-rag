@@ -23,7 +23,7 @@ CALL_SKIP = "pytest." + "skip("
 FAKE_SK = "s" + "k-" + "abcdefghijklmnopqrstuvwxyz123456"
 FAKE_LS = "lsv2" + "_pt_" + "0123456789abcdef"
 
-B, Q, O = "builder", "qa-validator", None  # roles; None = orchestrator
+B, Q, ORCH = "builder", "qa-validator", None  # roles; None = orchestrator
 
 
 def bash(cmd: str, role: str | None = B, cwd: Path | None = None) -> dict[str, Any]:
@@ -66,7 +66,7 @@ GIT_GH_CASES = [
 
 
 @pytest.mark.parametrize(("cmd", "is_blocked"), GIT_GH_CASES)
-@pytest.mark.parametrize("role", [B, O])
+@pytest.mark.parametrize("role", [B, ORCH])
 def test_git_and_gh_rules(repo: Path, cmd: str, is_blocked: bool, role: str | None) -> None:
     git(repo, "checkout", "-q", "-b", "pr/03-x")
     assert blocked(bash(cmd, role, repo)) is is_blocked
@@ -79,6 +79,7 @@ def test_bare_push_from_main_blocked(repo: Path) -> None:
 
 
 # --------------------------------------------------------------------------------------------- .env / env dumps
+
 
 @pytest.mark.parametrize(
     ("data", "is_blocked"),
@@ -111,6 +112,7 @@ def test_env_rules(repo: Path, data: dict[str, Any], is_blocked: bool) -> None:
 
 # --------------------------------------------------------------------------------------------- dangerous shell
 
+
 @pytest.mark.parametrize(
     ("cmd", "is_blocked"),
     [
@@ -140,6 +142,7 @@ def test_dangerous_shell(repo: Path, cmd: str, is_blocked: bool) -> None:
 
 
 # --------------------------------------------------------------------------------------------- protected paths
+
 
 @pytest.mark.parametrize(
     ("path", "is_blocked"),
@@ -198,6 +201,7 @@ def test_protected_paths_shell_write(repo: Path, cmd: str, is_blocked: bool) -> 
 
 # --------------------------------------------------------------------------------------------- content rules
 
+
 @pytest.mark.parametrize(
     ("path", "content", "is_blocked"),
     [
@@ -228,6 +232,7 @@ def test_content_rules_apply_to_edit_and_heredoc(repo: Path) -> None:
 
 # --------------------------------------------------------------------------------------------- role rules
 
+
 @pytest.mark.parametrize(
     ("path", "is_blocked"),
     [
@@ -241,7 +246,7 @@ def test_content_rules_apply_to_edit_and_heredoc(repo: Path) -> None:
     ],
 )
 def test_orchestrator_write_scope(repo: Path, path: str, is_blocked: bool) -> None:
-    assert blocked(write(path, role=O)) is is_blocked
+    assert blocked(write(path, role=ORCH)) is is_blocked
 
 
 @pytest.mark.parametrize(
@@ -255,7 +260,7 @@ def test_orchestrator_write_scope(repo: Path, path: str, is_blocked: bool) -> No
     ],
 )
 def test_orchestrator_shell_scope(repo: Path, cmd: str, is_blocked: bool) -> None:
-    assert blocked(bash(cmd, O)) is is_blocked
+    assert blocked(bash(cmd, ORCH)) is is_blocked
 
 
 @pytest.mark.parametrize(
@@ -286,6 +291,7 @@ def test_builder_cannot_write_qa_reports(repo: Path) -> None:
 
 # --------------------------------------------------------------------------------------------- merge gate
 
+
 def set_verdict(repo: Path, n: str, verdict: str | None) -> None:
     p = repo / "reports" / "qa" / f"pr-{n}.md"
     if verdict is None:
@@ -313,14 +319,14 @@ def test_local_merge_verdict_gate(repo: Path, verdict: str | None, is_blocked: b
     (repo / ".claude" / "state" / "ci-03.ok").write_text(sha + "\n")
     set_verdict(repo, "03", verdict)
     cmd = "git checkout main && git merge --squash pr/03-x"
-    assert blocked(bash(cmd, O, repo)) is is_blocked
+    assert blocked(bash(cmd, ORCH, repo)) is is_blocked
 
 
 def test_local_merge_accepts_unpadded_report_name(repo: Path) -> None:
     sha = make_pr_branch(repo)
     (repo / ".claude" / "state" / "ci-3.ok").write_text(sha)
     set_verdict(repo, "3", "VERDICT: PASS")
-    assert not blocked(bash("git merge --squash pr/03-x", O, repo))
+    assert not blocked(bash("git merge --squash pr/03-x", ORCH, repo))
 
 
 def test_local_merge_ci_marker_gate(repo: Path) -> None:
@@ -328,15 +334,15 @@ def test_local_merge_ci_marker_gate(repo: Path) -> None:
     set_verdict(repo, "03", "VERDICT: PASS")
     ok = repo / ".claude" / "state" / "ci-03.ok"
     cmd = "git merge --squash pr/03-x"
-    assert blocked(bash(cmd, O, repo))  # missing marker
+    assert blocked(bash(cmd, ORCH, repo))  # missing marker
     ok.write_text("deadbeef")
-    assert blocked(bash(cmd, O, repo))  # stale sha
+    assert blocked(bash(cmd, ORCH, repo))  # stale sha
     ok.write_text(sha)
     old = time.time() - 7200
     os.utime(ok, (old, old))
-    assert blocked(bash(cmd, O, repo))  # older than an hour
+    assert blocked(bash(cmd, ORCH, repo))  # older than an hour
     ok.write_text(sha)
-    assert not blocked(bash(cmd, O, repo))
+    assert not blocked(bash(cmd, ORCH, repo))
 
 
 @pytest.mark.parametrize("role", [B, Q])
@@ -367,25 +373,32 @@ def test_gh_merge_gate(repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(g.subprocess, "run", fake_run)
     set_verdict(repo, "7", "VERDICT: PASS")
-    assert not blocked(bash("gh pr merge 7 --squash --delete-branch", O, repo))
+    assert not blocked(bash("gh pr merge 7 --squash --delete-branch", ORCH, repo))
     assert calls and calls[-1][3] == "7"
-    assert blocked(bash("gh pr merge 7 --squash --admin", O, repo))
-    assert blocked(bash("gh pr merge --squash", O, repo))  # no PR number
+    assert blocked(bash("gh pr merge 7 --squash --admin", ORCH, repo))
+    assert blocked(bash("gh pr merge --squash", ORCH, repo))  # no PR number
     checks_rc["value"] = 1
-    assert blocked(bash("gh pr merge 7 --squash", O, repo))
+    assert blocked(bash("gh pr merge 7 --squash", ORCH, repo))
     checks_rc["value"] = 0
     set_verdict(repo, "7", "VERDICT: FAIL")
-    assert blocked(bash("gh pr merge 7 --squash", O, repo))
+    assert blocked(bash("gh pr merge 7 --squash", ORCH, repo))
     set_verdict(repo, "7", None)
-    assert blocked(bash("gh pr merge 7 --squash", O, repo))
+    assert blocked(bash("gh pr merge 7 --squash", ORCH, repo))
 
 
 # --------------------------------------------------------------------------------------------- CLI contract
 
+
 def run_hook(data: dict[str, Any], repo: Path) -> subprocess.CompletedProcess[str]:
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(repo)}
-    return subprocess.run([sys.executable, str(HOOKS / "guardrails.py")], input=json.dumps(data), text=True,
-                          capture_output=True, env=env, cwd=repo)
+    return subprocess.run(
+        [sys.executable, str(HOOKS / "guardrails.py")],
+        input=json.dumps(data),
+        text=True,
+        capture_output=True,
+        env=env,
+        cwd=repo,
+    )
 
 
 def test_cli_exit_codes(repo: Path) -> None:
@@ -393,8 +406,9 @@ def test_cli_exit_codes(repo: Path) -> None:
     assert r.returncode == 2 and "main" in r.stderr
     r = run_hook(bash("ls -la", B, repo), repo)
     assert r.returncode == 0 and r.stderr == ""
-    r = subprocess.run([sys.executable, str(HOOKS / "guardrails.py")], input="not json", text=True,
-                       capture_output=True, cwd=repo)
+    r = subprocess.run(
+        [sys.executable, str(HOOKS / "guardrails.py")], input="not json", text=True, capture_output=True, cwd=repo
+    )
     assert r.returncode == 0
 
 

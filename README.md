@@ -31,7 +31,7 @@ environment variable names are in `.env.example`.
 | `test` | full suite (including `tests/hooks`) with `--cov-branch --cov-fail-under=80` | ready |
 | `cov` | test run plus an HTML coverage report | ready |
 | `check` | lint + format check + typecheck + test | ready |
-| `ci` | `check` + gitleaks (if installed) + retrieval smoke eval; writes `.claude/state/ci-<NN>.ok` | ready |
+| `ci` | `check` + gitleaks (if installed) + retrieval smoke eval (stub until PR-09); writes `.claude/state/ci-<NN>.ok` | ready (smoke eval: PR-09) |
 | `up` / `down` | start / stop Qdrant via docker compose | ready |
 | `download`, `doctor` | dataset download, environment report | PR-02 |
 | `ingest` | chunk, embed and upsert into Qdrant | PR-03 |

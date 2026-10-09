@@ -21,7 +21,7 @@ help:
 
 setup:
 	$(UV) sync --all-extras --dev
-	@if [ -d .git ]; then $(RUN) pre-commit install; fi
+	@if git rev-parse --git-dir >/dev/null 2>&1; then $(RUN) pre-commit install; fi
 
 lint:
 	$(RUN) ruff check .
