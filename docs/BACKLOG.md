@@ -6,3 +6,4 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-02] No public no-auth mirror of the Kaggle dataset was adopted (licence unclear: CC BY-SA vs CC BY-NC-SA reports); revisit if a mirror with a verified licence and identical columns appears.
 - [PR-02] `.env.example` (unreadable by the builder role) should list the optional overrides `QDRANT_URL`, `NEBIUS_BASE_URL`, `MCP_URL`, `LANGSMITH_PROJECT` if it does not already.
 - [PR-02] Kaggle auth supports only `KAGGLE_USERNAME`/`KAGGLE_KEY` env vars, not `~/.kaggle/kaggle.json` or the newer single-token form.
+- [PR-02] Fixture plots are distinctive but formulaic (one premise sentence, one twist, object-linked beats); PR-08 may want to hand-write more of them if fuzzy questions still prove ambiguous.

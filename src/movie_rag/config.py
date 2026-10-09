@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from collections.abc import Callable
+from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
 
@@ -26,6 +27,7 @@ from movie_rag.errors import MissingCredentialError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.yaml"
+DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"  # resolved against the repository, never the current directory
 CONFIG_ENV_VAR = "MOVIE_RAG_CONFIG"
 REDACTED = "***"
 
@@ -82,15 +84,18 @@ class AgentConfig(_Section):
 class ObservabilityConfig(_Section):
     project: str
     langsmith_api_url: str
+    git_timeout_s: float = Field(gt=0)
 
 
 class DataConfig(_Section):
     dataset_slug: str
     kaggle_api_url: str
+    kaggle_token_help_url: str
     raw_dir: Path
     csv_name: str
     fixture_path: Path
     max_download_mb: int = Field(gt=0)
+    max_extracted_mb: int = Field(gt=0)
     http_timeout_s: float = Field(gt=0)
 
     def resolve(self, path: Path, root: Path = PROJECT_ROOT) -> Path:
@@ -121,7 +126,7 @@ class Settings(BaseSettings):
     """Application settings. Build with :func:`load_settings`."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=DEFAULT_ENV_FILE,
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
         extra="ignore",
@@ -251,15 +256,26 @@ def default_config_path() -> Path:
     return Path(override) if override else DEFAULT_CONFIG_PATH
 
 
-def load_settings(config_path: Path | str | None = None, *, env_file: Path | str | None = ".env") -> Settings:
+class _UseDefault(Enum):
+    DEFAULT = "default"
+
+
+USE_DEFAULT = _UseDefault.DEFAULT
+
+
+def load_settings(
+    config_path: Path | str | None = None, *, env_file: Path | str | _UseDefault | None = USE_DEFAULT
+) -> Settings:
     """Load settings from ``config_path`` (default: :func:`default_config_path`), the environment and ``env_file``.
 
-    Pass ``env_file=None`` to ignore ``.env`` (tests do this for isolation).
+    The default ``env_file`` is ``<repository>/.env`` wherever the process was started. Pass ``env_file=None`` to
+    ignore ``.env`` (tests do this for isolation).
     """
     path = Path(config_path) if config_path is not None else default_config_path()
+    dotenv = DEFAULT_ENV_FILE if isinstance(env_file, _UseDefault) else env_file
 
     class _Loaded(Settings):
-        model_config = SettingsConfigDict(yaml_file=path, env_file=env_file)
+        model_config = SettingsConfigDict(yaml_file=path, env_file=dotenv)
 
     _Loaded.__name__ = "Settings"
     # Fields are populated from the sources, not from constructor arguments, so build through a bare factory.

@@ -44,10 +44,12 @@ the synthetic fixture below.
 ## Fixture
 
 [`tests/fixtures/movies_sample.csv`](../tests/fixtures/README.md) is 300 invented films in the exact Kaggle schema:
-several genres, origins and decades, 9 plots under 50 words (including one of exactly 49) that cleaning drops, one of
-exactly 50 words that it keeps, and 12 plots of about 300 words that the chunker must split. It is generated from a
-fixed seed by `tests/fixtures/build_movies_sample.py`. Retrieval numbers measured on it prove the pipeline works; they
-say nothing about quality on the real 35k films.
+17 genres, 17 origins, the 1910s to the 2010s, 9 plots under 50 words (including one of exactly 49) that cleaning
+drops, one of exactly 50 words that it keeps, and 13 plots of 250 to 300 words that the chunker must split. Every
+film has a premise of its own: 36 are hand-written anchors and 264 are built from story motifs drawn without
+replacement, and a test enforces how distinctive the plots are. It is generated from a fixed seed by
+`tests/fixtures/build_movies_sample.py`. Retrieval numbers measured on it prove the pipeline works; they say nothing
+about quality on the real 35k films.
 
 ## Cleaning rules
 

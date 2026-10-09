@@ -21,13 +21,38 @@ from movie_rag.config import PROJECT_ROOT, Settings, load_settings
 logger = logging.getLogger(__name__)
 
 UNKNOWN_SHA = "unknown"
-_SENSITIVE_KEY = re.compile(r"key|secret|token|password|authorization|credential", re.IGNORECASE)
+_KEY_SPLIT = re.compile(r"[^a-z0-9]+")
+_SENSITIVE_WORDS = frozenset(
+    {"password", "passwd", "secret", "secrets", "authorization", "credential", "credentials", "apikey", "bearer"}
+)
+_KEY_QUALIFIERS = frozenset(
+    {"api", "kaggle", "nebius", "langsmith", "secret", "private", "access", "auth", "ssh", "signing"}
+)
+_TOKEN_QUALIFIERS = frozenset({"access", "auth", "bearer", "refresh", "api", "session", "id", "secret"})
 _SECRET_SHAPED_VALUE = re.compile(r"\b(sk-[A-Za-z0-9_-]{8,}|lsv2_[A-Za-z0-9_]{8,})")
-_GIT_TIMEOUT_S = 5
 
 
-@lru_cache(maxsize=1)
-def git_sha() -> str:
+def is_credential_like(key: str) -> bool:
+    """True for field names such as ``api_key``, ``NEBIUS_API_KEY``, ``access_token`` or ``authorization``.
+
+    Counters such as ``total_tokens`` or ``prompt_tokens`` are fine: only a lone ``token``/``key`` or one qualified as
+    a credential counts.
+    """
+    words = [w for w in _KEY_SPLIT.split(key.lower()) if w]
+    if not words:
+        return False
+    if _SENSITIVE_WORDS & set(words):
+        return True
+    last, before = words[-1], words[-2] if len(words) > 1 else ""
+    if last == "key":
+        return not before or before in _KEY_QUALIFIERS
+    if last == "token":
+        return not before or before in _TOKEN_QUALIFIERS
+    return False
+
+
+@lru_cache(maxsize=4)
+def git_sha(timeout_s: float) -> str:
     """Short git sha of the working tree's HEAD, or ``"unknown"`` outside a repository."""
     try:
         result = subprocess.run(
@@ -35,7 +60,7 @@ def git_sha() -> str:
             cwd=PROJECT_ROOT,
             capture_output=True,
             text=True,
-            timeout=_GIT_TIMEOUT_S,
+            timeout=timeout_s,
             check=False,
         )
     except (OSError, subprocess.SubprocessError):
@@ -76,7 +101,7 @@ def run_metadata(settings: Settings | None = None, **extra: Any) -> dict[str, An
     """
     settings = settings or load_settings()
     metadata: dict[str, Any] = {
-        "git_sha": git_sha(),
+        "git_sha": git_sha(settings.observability.git_timeout_s),
         "prompt_version": settings.agent.prompt_version,
         "chat_model": settings.llm.chat_model,
         "embedding_model": settings.embeddings.dense_model,
@@ -85,7 +110,7 @@ def run_metadata(settings: Settings | None = None, **extra: Any) -> dict[str, An
         "config_hash": settings.config_hash(),
     }
     for key, value in extra.items():
-        if _SENSITIVE_KEY.search(key):
+        if is_credential_like(key):
             raise ValueError(f"refusing to put a credential-like field in trace metadata: {key!r}")
         if isinstance(value, str) and (_SECRET_SHAPED_VALUE.search(value) or value in settings.secret_values()):
             raise ValueError(f"refusing to put a secret-shaped value in trace metadata field {key!r}")

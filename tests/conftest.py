@@ -21,6 +21,7 @@ FIXTURE_CSV = ROOT / "tests" / "fixtures" / "movies_sample.csv"
 
 # Everything the settings layer reads from the environment; scrubbed so a developer's shell or .env cannot leak in.
 SETTINGS_ENV_VARS = (
+    "LANGSMITH_ENDPOINT",
     "NEBIUS_API_KEY",
     "NEBIUS_BASE_URL",
     "KAGGLE_USERNAME",
@@ -36,7 +37,10 @@ SETTINGS_ENV_VARS = (
 @pytest.fixture(autouse=True)
 def _clean_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     for name in SETTINGS_ENV_VARS:
-        monkeypatch.delenv(name, raising=False)
+        # setenv-then-delenv makes monkeypatch remember "absent", so a key exported later by code under test
+        # (for example configure_tracing) is removed again at teardown instead of leaking into other tests.
+        monkeypatch.setenv(name, "")
+        monkeypatch.delenv(name)
     for name in [n for n in os.environ if "__" in n and n.split("__")[0].lower() in Settings.model_fields]:
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LANGSMITH_TRACING", "false")

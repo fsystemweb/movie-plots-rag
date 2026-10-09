@@ -138,6 +138,16 @@ def test_oversized_download_is_aborted(make_settings: MakeSettings, tmp_path: Pa
         download_dataset(s, client=recorder.client())
 
 
+def test_extraction_limit_comes_from_settings_not_a_multiple_of_the_download_limit(
+    make_settings: MakeSettings, tmp_path: Path
+) -> None:
+    s = make_settings(
+        DATA__RAW_DIR=str(tmp_path / "raw"), DATA__MAX_DOWNLOAD_MB="1", DATA__MAX_EXTRACTED_MB="8", **CREDS
+    )
+    inflated = ok_archive({CSV_NAME: b"0" * (6 * 1024 * 1024)})  # 6 MB unzipped, under the configured 8 MB
+    assert download_dataset(s, client=inflated.client()).stat().st_size == 6 * 1024 * 1024
+
+
 def test_not_a_zip_is_reported(settings: Settings) -> None:
     recorder = Recorder(lambda request: httpx.Response(200, content=b"<html>login</html>"))
     with pytest.raises(DownloadError, match="not a zip"):
@@ -157,7 +167,7 @@ def test_hostile_member_paths_cannot_escape_the_target_directory(settings: Setti
 
 
 def test_decompression_bombs_are_stopped_by_counting_real_bytes(make_settings: MakeSettings, tmp_path: Path) -> None:
-    s = make_settings(DATA__RAW_DIR=str(tmp_path / "raw"), DATA__MAX_DOWNLOAD_MB="1", **CREDS)
+    s = make_settings(DATA__RAW_DIR=str(tmp_path / "raw"), DATA__MAX_EXTRACTED_MB="5", **CREDS)
     bomb = ok_archive({CSV_NAME: b"0" * (6 * 1024 * 1024)})  # small zip, 6 MB inflated, limit is 5 MB
     with pytest.raises(DownloadError, match="larger than the configured limit"):
         download_dataset(s, client=bomb.client())
@@ -175,8 +185,22 @@ def test_cli_without_credentials_prints_the_hint_and_exits_2_without_a_traceback
     captured = capsys.readouterr()
     assert "set KAGGLE_USERNAME and KAGGLE_KEY — see docs/CREDENTIALS.md" in captured.err
     assert ".env" in captured.err
+    assert "https://www.kaggle.com/settings" in captured.err  # comes from config.yaml (data.kaggle_token_help_url)
     assert "tests/fixtures/movies_sample.csv" in captured.err
     assert "Traceback" not in captured.err + captured.out
+
+
+def test_cli_reports_an_unreadable_configuration_without_a_traceback(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def broken() -> Settings:
+        raise ValueError("bad yaml")
+
+    monkeypatch.setattr(download, "load_settings", broken)
+    assert main([]) == download.EXIT_FAILURE
+    captured = capsys.readouterr()
+    assert "cannot load the configuration" in captured.err
+    assert "Traceback" not in captured.err
 
 
 def test_cli_success(

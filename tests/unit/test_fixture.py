@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import csv
 import importlib.util
+import math
+import re
 from collections import Counter
 from pathlib import Path
 from types import ModuleType
 
-from movie_rag.ingest.clean import RAW_COLUMNS, clean_csv, count_words, read_raw_rows
+from movie_rag.ingest.clean import RAW_COLUMNS, MovieRecord, clean_csv, count_words, read_raw_rows
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tests" / "fixtures" / "movies_sample.csv"
@@ -73,7 +75,7 @@ def test_fixture_exercises_the_exact_word_boundary() -> None:
 def test_fixture_has_long_plots_for_chunking() -> None:
     records, _ = clean_csv(FIXTURE, min_plot_words=50)
     long_ones = [r for r in records if count_words(r.plot) >= LONG_PLOT_WORDS]
-    assert len(long_ones) >= 5
+    assert len(long_ones) >= 12
 
 
 def test_fixture_ids_are_unique_and_titles_are_unique() -> None:
@@ -93,3 +95,99 @@ def test_fixture_contains_the_demo_anchor_films() -> None:
 def test_generator_is_deterministic() -> None:
     generator = load_generator()
     assert generator.build_rows() == generator.build_rows()
+
+
+# --- distinctiveness: the evaluation set (PR-08) is written from these films -----------------------------------------
+
+FORGETTING_HOUR = "The Forgetting Hour"
+MASK_CAPITALISED = re.compile(r"\b[A-Z][\w'-]*")
+WORD = re.compile(r"[a-z]{3,}")
+REAL_PEOPLE_DENYLIST = ("Kapoor", "Brennan", "Bachchan")  # real surnames that must not appear in cast or director
+
+
+def kept_records() -> list[MovieRecord]:
+    return clean_csv(FIXTURE, min_plot_words=50)[0]
+
+
+def masked_sentences(plot: str) -> list[str]:
+    """Sentences with every capitalised word (names, sentence starts) masked, so names cannot fake uniqueness."""
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", plot) if s.strip()]
+    return [MASK_CAPITALISED.sub("X", s) for s in sentences]
+
+
+def word_ngrams(plot: str, n: int = 4) -> set[tuple[str, ...]]:
+    words = re.findall(r"[a-z']+", plot.lower())
+    return {tuple(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def tfidf_nearest_neighbour_cosines(plots: list[str]) -> list[float]:
+    docs = [Counter(WORD.findall(p.lower())) for p in plots]
+    document_frequency = Counter(w for d in docs for w in d)
+    vectors: list[dict[str, float]] = []
+    for d in docs:
+        weights = {w: (1 + math.log(c)) * math.log(len(docs) / document_frequency[w]) for w, c in d.items()}
+        norm = math.sqrt(sum(x * x for x in weights.values()))
+        vectors.append({w: x / norm for w, x in weights.items()})
+    return [
+        max(sum(x * other.get(w, 0.0) for w, x in v.items()) for j, other in enumerate(vectors) if j != i)
+        for i, v in enumerate(vectors)
+    ]
+
+
+def test_generator_ships_at_least_thirty_hand_written_anchors_across_genres_origins_and_decades() -> None:
+    anchors = load_generator()._load_anchors()
+    assert len(anchors) >= 30
+    assert len({a["genre"] for a in anchors}) >= 14
+    assert len({a["origin"] for a in anchors}) >= 15
+    assert len({a["year"] // 10 for a in anchors}) >= 9
+    assert len({a["title"] for a in anchors}) == len(anchors)
+    long_anchors = [a for a in anchors if count_words(a["plot"]) >= LONG_PLOT_WORDS]
+    assert len(long_anchors) >= 12
+
+
+def test_no_two_kept_films_share_a_premise_sentence() -> None:
+    premises = Counter(masked_sentences(r.plot)[0] for r in kept_records())
+    assert [p for p, c in premises.items() if c > 1] == []
+
+
+def test_titles_are_unique_across_the_whole_file() -> None:
+    titles = [str(r["Title"]) for r in read_raw_rows(FIXTURE)]
+    assert len(set(titles)) == len(titles)
+
+
+def test_most_of_each_plot_is_unique_to_its_film() -> None:
+    """Only the closing sentence (and rarely a beat) may repeat between films; premise, twist and beats cannot."""
+    sentences = [masked_sentences(r.plot) for r in kept_records()]
+    occurrences = Counter(s for per_film in sentences for s in set(per_film))
+    shares = [sum(occurrences[s] == 1 for s in per_film) / len(per_film) for per_film in sentences]
+    assert sum(shares) / len(shares) >= 0.75
+    assert min(shares) >= 0.5  # at most half of any plot is shared connective text
+
+
+def test_plots_are_lexically_distinct_nearest_neighbour_tfidf() -> None:
+    cosines = tfidf_nearest_neighbour_cosines([r.plot for r in kept_records()])
+    assert max(cosines) < 0.4
+    assert sum(c < 0.3 for c in cosines) / len(cosines) >= 0.95
+
+
+def test_anchor_plots_do_not_overlap_any_other_plot() -> None:
+    anchor_titles = {a["title"] for a in load_generator()._load_anchors()}
+    records = kept_records()
+    grams = [word_ngrams(r.plot) for r in records]
+    checked = 0
+    for i, record in enumerate(records):
+        if record.title in anchor_titles:
+            checked += 1
+            overlap = max(len(grams[i] & grams[j]) / len(grams[i]) for j in range(len(records)) if j != i)
+            assert overlap < 0.1, record.title
+    assert checked >= 30
+
+
+def test_the_memory_loss_premise_belongs_to_the_anchor_alone() -> None:
+    hits = [r.title for r in kept_records() if re.search(r"\b(memory|amnesia|amnesiac)\b", r.plot, re.IGNORECASE)]
+    assert hits == [FORGETTING_HOUR]
+
+
+def test_cast_and_directors_avoid_a_denylist_of_real_surnames() -> None:
+    people = " ".join(f"{r['Director']} {r['Cast']}" for r in read_raw_rows(FIXTURE))
+    assert [name for name in REAL_PEOPLE_DENYLIST if name in people] == []

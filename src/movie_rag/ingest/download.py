@@ -26,11 +26,15 @@ EXIT_OK = 0
 EXIT_FAILURE = 1
 EXIT_MISSING_CREDENTIALS = 2
 _CHUNK = 1 << 16
-MISSING_CREDENTIALS_HELP = (
-    "Create a Kaggle API token at https://www.kaggle.com/settings (API section), put KAGGLE_USERNAME and KAGGLE_KEY\n"
-    "in .env (names are listed in .env.example), then run `make download` again.\n"
-    "No account needed to develop: tests/fixtures/movies_sample.csv is a synthetic stand-in (see docs/DATASET.md)."
-)
+
+
+def missing_credentials_help(settings: Settings) -> str:
+    """What to do next, shown below the documented ``set KAGGLE_USERNAME and KAGGLE_KEY`` line."""
+    return (
+        f"Create a Kaggle API token at {settings.data.kaggle_token_help_url}, put KAGGLE_USERNAME and KAGGLE_KEY\n"
+        "in .env (names are listed in .env.example), then run `make download` again.\n"
+        f"No account needed to develop: {settings.data.fixture_path} is a synthetic stand-in (see docs/DATASET.md)."
+    )
 
 
 def say(message: str) -> None:
@@ -113,7 +117,7 @@ def download_dataset(settings: Settings, *, client: httpx.Client | None = None, 
     finally:
         if owns_client:
             http.close()
-    _extract_csv(payload, settings.data.csv_name, destination, settings.data.max_download_mb * 1024 * 1024 * 5)
+    _extract_csv(payload, settings.data.csv_name, destination, settings.data.max_extracted_mb * 1024 * 1024)
     logger.info("dataset written to %s", destination)
     return destination
 
@@ -125,9 +129,15 @@ def main(argv: Sequence[str] | None = None, *, client: httpx.Client | None = Non
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     try:
-        path = download_dataset(load_settings(), client=client, force=args.force)
+        settings = load_settings()
+    except Exception as exc:  # an unreadable config is a user error: report it, never a traceback
+        say(f"cannot load the configuration: {type(exc).__name__}: fix config.yaml / .env and re-run")
+        logger.debug("configuration error", exc_info=exc)
+        return EXIT_FAILURE
+    try:
+        path = download_dataset(settings, client=client, force=args.force)
     except MissingCredentialError as exc:
-        say(f"Kaggle credentials are not configured.\n  {exc}\n{MISSING_CREDENTIALS_HELP}")
+        say(f"Kaggle credentials are not configured.\n  {exc}\n{missing_credentials_help(settings)}")
         return EXIT_MISSING_CREDENTIALS
     except MovieRagError as exc:
         say(f"download failed: {exc}")

@@ -53,7 +53,13 @@ def test_run_metadata_has_no_secrets(settings: Settings) -> None:
     assert_no_secret(repr(run_metadata(settings, retrieval_mode="hybrid")))
 
 
-def test_configure_tracing_logs_no_secrets(settings: Settings, caplog: pytest.LogCaptureFixture) -> None:
+def test_configure_tracing_logs_no_secrets(
+    settings: Settings, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # configure_tracing writes these straight into os.environ; registering them with monkeypatch first makes
+    # pytest restore the original (absent) state when the test ends.
+    monkeypatch.setenv("LANGSMITH_PROJECT", "placeholder")
+    monkeypatch.setenv("LANGSMITH_API_KEY", "placeholder")
     with caplog.at_level(logging.DEBUG):
         configure_tracing(settings)
         configure_tracing(settings.model_copy(update={"langsmith_api_key": None}))

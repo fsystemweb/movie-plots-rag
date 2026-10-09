@@ -42,14 +42,17 @@ agent:
 observability:
   project: movie-plots-rag
   langsmith_api_url: https://api.smith.langchain.com
+  git_timeout_s: 5
 
 data:
   dataset_slug: jrobischon/wikipedia-movie-plots
   kaggle_api_url: https://www.kaggle.com/api/v1
+  kaggle_token_help_url: https://www.kaggle.com/settings
   raw_dir: data/raw
   csv_name: wiki_movie_plots_deduped.csv
   fixture_path: tests/fixtures/movies_sample.csv
   max_download_mb: 200
+  max_extracted_mb: 1000   # cap on the unzipped CSV, counted while writing (zip-bomb guard)
   http_timeout_s: 60
 
 doctor:

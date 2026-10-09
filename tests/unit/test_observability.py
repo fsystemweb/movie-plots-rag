@@ -12,7 +12,7 @@ from langsmith import utils as ls_utils
 
 from movie_rag import observability
 from movie_rag.config import Settings
-from movie_rag.observability import configure_tracing, git_sha, run_metadata, tracing_enabled
+from movie_rag.observability import configure_tracing, git_sha, is_credential_like, run_metadata, tracing_enabled
 
 MakeSettings = Callable[..., Settings]
 REQUIRED_KEYS = {"git_sha", "prompt_version", "chat_model", "embedding_model", "retrieval_mode", "config_hash"}
@@ -40,12 +40,71 @@ def test_run_metadata_loads_settings_when_none_given() -> None:
     assert run_metadata().keys() >= REQUIRED_KEYS
 
 
-@pytest.mark.parametrize(
-    "key", ["api_key", "NEBIUS_API_KEY", "authorization", "access_token", "password", "client_secret"]
-)
+CREDENTIAL_KEYS = [
+    "api_key",
+    "NEBIUS_API_KEY",
+    "LANGSMITH_API_KEY",
+    "KAGGLE_KEY",
+    "key",
+    "apikey",
+    "private-key",
+    "authorization",
+    "Authorization",
+    "access_token",
+    "auth_token",
+    "bearer_token",
+    "token",
+    "password",
+    "client_secret",
+    "credentials",
+]
+HARMLESS_KEYS = [
+    "total_tokens",
+    "prompt_tokens",
+    "completion_tokens",
+    "input_tokens",
+    "tokens",
+    "max_tokens",
+    "tool_calls",
+    "top_k",
+    "cache_key",
+    "sort_key",
+    "latency_ms",
+    "filters",
+    "retrieval_mode",
+]
+
+
+@pytest.mark.parametrize("key", CREDENTIAL_KEYS)
 def test_run_metadata_rejects_credential_like_fields(make_settings: MakeSettings, key: str) -> None:
+    assert is_credential_like(key)
     with pytest.raises(ValueError, match="credential-like"):
         run_metadata(make_settings(), **{key: "anything"})
+
+
+@pytest.mark.parametrize("key", HARMLESS_KEYS)
+def test_run_metadata_accepts_harmless_fields_such_as_token_counts(make_settings: MakeSettings, key: str) -> None:
+    assert not is_credential_like(key)
+    assert run_metadata(make_settings(), **{key: 123})[key] == 123
+
+
+def test_empty_key_is_not_credential_like() -> None:
+    assert is_credential_like("") is False
+
+
+def test_git_timeout_comes_from_settings(make_settings: MakeSettings, monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[object] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        seen.append(kwargs["timeout"])
+        return subprocess.CompletedProcess(args=[], returncode=0, stdout="abc1234\n", stderr="")
+
+    git_sha.cache_clear()
+    monkeypatch.setattr(observability.subprocess, "run", fake_run)
+    meta = run_metadata(make_settings(OBSERVABILITY__GIT_TIMEOUT_S="7"))
+    assert meta["git_sha"] == "abc1234"
+    assert seen == [7.0]
+    git_sha.cache_clear()
 
 
 @pytest.mark.parametrize("value", ["sk-abcdefghijklmnop", "lsv2_pt_abcdefghijkl", "fake-nebius-value"])
@@ -69,8 +128,8 @@ def test_non_string_extras_pass_through(make_settings: MakeSettings) -> None:
 
 def test_git_sha_is_cached_and_short() -> None:
     git_sha.cache_clear()
-    first = git_sha()
-    assert git_sha() == first
+    first = git_sha(5.0)
+    assert git_sha(5.0) == first
     assert first == "unknown" or 7 <= len(first) <= 12
 
 
@@ -80,7 +139,7 @@ def test_git_sha_falls_back_when_git_is_unavailable(monkeypatch: pytest.MonkeyPa
 
     git_sha.cache_clear()
     monkeypatch.setattr(observability.subprocess, "run", boom)
-    assert git_sha() == "unknown"
+    assert git_sha(5.0) == "unknown"
     git_sha.cache_clear()
 
 
@@ -88,7 +147,7 @@ def test_git_sha_falls_back_outside_a_repository(monkeypatch: pytest.MonkeyPatch
     git_sha.cache_clear()
     failed = subprocess.CompletedProcess(args=[], returncode=128, stdout="", stderr="not a git repository")
     monkeypatch.setattr(observability.subprocess, "run", lambda *a, **k: failed)
-    assert git_sha() == "unknown"
+    assert git_sha(5.0) == "unknown"
     git_sha.cache_clear()
 
 
@@ -118,7 +177,7 @@ def test_configure_tracing_with_key_exports_environment(
     make_settings: MakeSettings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     s = make_settings(LANGSMITH_TRACING="true", LANGSMITH_API_KEY="fake-ls-value", LANGSMITH_PROJECT="proj")
-    monkeypatch.setenv("LANGSMITH_PROJECT", "to-be-overwritten")
+    monkeypatch.setenv("LANGSMITH_PROJECT", "to-be-overwritten")  # registered, so monkeypatch restores it
     assert configure_tracing(s) is True
     assert os.environ["LANGSMITH_TRACING"] == "true"
     assert os.environ["LANGSMITH_PROJECT"] == "proj"

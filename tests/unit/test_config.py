@@ -7,7 +7,16 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from movie_rag.config import CONFIG_ENV_VAR, DEFAULT_CONFIG_PATH, Settings, default_config_path, load_settings
+from movie_rag import config as config_module
+from movie_rag.config import (
+    CONFIG_ENV_VAR,
+    DEFAULT_CONFIG_PATH,
+    DEFAULT_ENV_FILE,
+    PROJECT_ROOT,
+    Settings,
+    default_config_path,
+    load_settings,
+)
 from movie_rag.errors import MissingCredentialError
 
 MakeSettings = Callable[..., Settings]
@@ -193,3 +202,29 @@ def test_secrets_are_masked_in_repr_and_dumps(make_settings: MakeSettings) -> No
     for text in (repr(s), str(s), s.model_dump_json(), str(s.model_dump())):
         for secret in s.secret_values():
             assert secret not in text
+
+
+def test_default_env_file_is_resolved_against_the_repository_not_the_working_directory() -> None:
+    assert DEFAULT_ENV_FILE == PROJECT_ROOT / ".env"
+    assert DEFAULT_ENV_FILE.is_absolute()
+    assert Settings.model_config["env_file"] == DEFAULT_ENV_FILE
+
+
+def test_default_load_reads_the_project_env_file_even_from_another_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_env = tmp_path / "project.env"
+    project_env.write_text("NEBIUS_API_KEY=from-project-dotenv\n")
+    elsewhere = tmp_path / "some" / "subdirectory"
+    elsewhere.mkdir(parents=True)
+    (elsewhere / ".env").write_text("NEBIUS_API_KEY=from-cwd-dotenv\n")  # must NOT win
+    monkeypatch.setattr(config_module, "DEFAULT_ENV_FILE", project_env)
+    monkeypatch.chdir(elsewhere)
+    assert load_settings().require_nebius_api_key().get_secret_value() == "from-project-dotenv"
+
+
+def test_new_tunables_are_configured_not_hard_coded(make_settings: MakeSettings) -> None:
+    s = make_settings()
+    assert s.data.max_extracted_mb > s.data.max_download_mb
+    assert s.observability.git_timeout_s > 0
+    assert s.data.kaggle_token_help_url.startswith("https://")
