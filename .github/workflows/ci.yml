@@ -118,4 +118,4 @@ jobs:
         run: make eval-smoke LLM=1
       - name: LLM half skipped
         if: env.NEBIUS_API_KEY == ''
-        run: echo "skipped: no NEBIUS_API_KEY" >> "$GITHUB_STEP_SUMMARY"
+        run: 'echo "skipped: no NEBIUS_API_KEY" >> "$GITHUB_STEP_SUMMARY"'
