@@ -4,8 +4,8 @@ Orchestrator memory across restarts. Statuses: `todo · in-progress · merged ·
 
 | ID | Title | Branch | Status | PR | CI | QA | Attempts | Merged (UTC) | Notes |
 |---|---|---|---|---|---|---|---:|---|---|
-| PR-01 | Scaffold, tooling, CI | pr/01-scaffold | in-progress | local | | | 1 | | |
-| PR-02 | Settings, errors, observability, data | pr/02-settings-data | todo | | | | 0 | | |
+| PR-01 | Scaffold, tooling, CI | pr/01-scaffold | merged | [#1](https://github.com/fsystemweb/movie-plots-rag/pull/1) | ✅ | ✅ | 1 | 2026-10-09 20:14 | QA FAIL r1 (ruff ignores too broad) → PASS r2; CI blocked first by workflow YAML bug, fixed on main 7101dca |
+| PR-02 | Settings, errors, observability, data | pr/02-settings-data | in-progress | | | | 1 | | |
 | PR-03 | Chunking, embeddings, ingestion | pr/03-ingestion | todo | | | | 0 | | |
 | PR-04 | Hybrid retrieval | pr/04-retrieval | todo | | | | 0 | | |
 | PR-05 | FastMCP server | pr/05-mcp-server | todo | | | | 0 | | |
