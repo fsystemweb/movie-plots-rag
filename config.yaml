@@ -1,0 +1,32 @@
+# Central tunables. Typed loading (pydantic-settings, env overrides, config hash) arrives in PR-02;
+# this skeleton fixes the key names so later PRs only fill in behaviour. Never hard-code these in src/.
+qdrant:
+  url: http://localhost:6333
+  collection: movie_plots
+
+embeddings:
+  dense_model: BAAI/bge-small-en-v1.5
+  dense_dim: 384
+  sparse_model: Qdrant/bm25
+
+ingest:
+  chunk_tokens: 250
+  chunk_overlap: 40
+  batch_size: 256
+
+retrieval:
+  default_mode: hybrid
+  top_k: 8
+  prefetch_limit: 40
+  rrf_k: 60
+  snippet_max_chars: 400
+
+llm:
+  base_url: https://api.tokenfactory.nebius.com/v1/
+  chat_model: Qwen/Qwen3-30B-A3B-Instruct-2507
+  judge_model: openai/gpt-oss-120b
+  temperature: 0
+  max_tool_calls: 4
+
+mcp:
+  url: http://localhost:8000/mcp

@@ -1,0 +1,70 @@
+[project]
+name = "movie-rag"
+version = "0.1.0"
+description = "Movie-discovery RAG agent that answers fuzzy plot questions with cited results."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+# Later PRs add their runtime extras here; CI installs with `--all-extras --dev`.
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "pyyaml>=6.0",
+    "types-pyyaml>=6.0",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/movie_rag"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["data", "logs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+# Protected hook scripts (.claude/**) cannot be edited by the builder; ignore only what actually fires there.
+".claude/hooks/*.py" = ["E501", "SIM114", "RUF005", "UP017", "C420"]
+
+[tool.ruff.format]
+# Protected hook scripts (.claude/**) cannot be edited by the builder, so they are not reformatted.
+# Markdown under .claude (skills) holds illustrative snippets, not code to format.
+exclude = [".claude/hooks/*.py", ".claude/**/*.md"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "live: calls a real external API (needs credentials); deselected in CI via -m 'not live'",
+    "integration: needs the Qdrant service (QDRANT_URL / docker compose up -d qdrant)",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/movie_rag"]
+
+[tool.coverage.report]
+show_missing = true

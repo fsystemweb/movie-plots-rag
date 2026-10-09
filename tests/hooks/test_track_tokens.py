@@ -16,12 +16,21 @@ tt = load_hook("track_tokens")
 
 
 def msg_line(mid: str, model: str, inp: int, out: int, cw: int = 0, cr: int = 0) -> str:
-    return json.dumps({
-        "type": "assistant",
-        "message": {"id": mid, "model": model, "usage": {
-            "input_tokens": inp, "output_tokens": out,
-            "cache_creation_input_tokens": cw, "cache_read_input_tokens": cr}},
-    })
+    return json.dumps(
+        {
+            "type": "assistant",
+            "message": {
+                "id": mid,
+                "model": model,
+                "usage": {
+                    "input_tokens": inp,
+                    "output_tokens": out,
+                    "cache_creation_input_tokens": cw,
+                    "cache_read_input_tokens": cr,
+                },
+            },
+        }
+    )
 
 
 def fake_transcript(path: Path) -> Path:
@@ -43,8 +52,10 @@ def test_dedup_by_message_id(tmp_path: Path) -> None:
     usage = tt.sum_usage(fake_transcript(tmp_path / "t.jsonl"))
     assert usage["messages"] == 2
     assert usage["totals"] == {
-        "input_tokens": 30, "output_tokens": 37,
-        "cache_creation_input_tokens": 100, "cache_read_input_tokens": 1500,
+        "input_tokens": 30,
+        "output_tokens": 37,
+        "cache_creation_input_tokens": 100,
+        "cache_read_input_tokens": 1500,
     }
     assert usage["by_model"]["claude-opus-5-5"]["output_tokens"] == 7
     assert usage["by_model"]["claude-sonnet-5-5"]["input_tokens"] == 20
@@ -58,8 +69,10 @@ def test_find_transcript_variants(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
     explicit = tmp_path / "explicit.jsonl"
     explicit.write_text("")
-    assert tt.find_transcript({"agent_id": "a1", "agent_transcript_path": str(explicit),
-                               "transcript_path": str(main)}) == explicit
+    assert (
+        tt.find_transcript({"agent_id": "a1", "agent_transcript_path": str(explicit), "transcript_path": str(main)})
+        == explicit
+    )
 
     sub = main.parent / "sess" / "subagents" / "agent-a2.jsonl"
     sub.parent.mkdir(parents=True)
@@ -85,15 +98,26 @@ def test_current_pr_from_state_then_branch(repo: Path) -> None:
 
 def run(args: list[str], repo: Path, stdin: str = "") -> subprocess.CompletedProcess[str]:
     env = {**os.environ, "CLAUDE_PROJECT_DIR": str(repo)}
-    return subprocess.run([sys.executable, str(HOOKS / "track_tokens.py"), *args], input=stdin, text=True,
-                          capture_output=True, env=env, cwd=repo)
+    return subprocess.run(
+        [sys.executable, str(HOOKS / "track_tokens.py"), *args],
+        input=stdin,
+        text=True,
+        capture_output=True,
+        env=env,
+        cwd=repo,
+    )
 
 
 def test_hook_appends_rows_and_render_keeps_last(repo: Path, tmp_path: Path) -> None:
     (repo / ".claude" / "state" / "current_pr").write_text("PR-01")
     t = fake_transcript(tmp_path / "agent.jsonl")
-    ev: dict[str, Any] = {"hook_event_name": "SubagentStop", "session_id": "s1", "agent_id": "ag1",
-                          "agent_type": "builder", "agent_transcript_path": str(t)}
+    ev: dict[str, Any] = {
+        "hook_event_name": "SubagentStop",
+        "session_id": "s1",
+        "agent_id": "ag1",
+        "agent_type": "builder",
+        "agent_transcript_path": str(t),
+    }
     assert run([], repo, json.dumps(ev)).returncode == 0
     assert run([], repo, json.dumps(ev)).returncode == 0  # same agent twice -> render keeps one
     rows = [json.loads(x) for x in (repo / "docs" / "token_usage.jsonl").read_text().splitlines()]
@@ -114,11 +138,19 @@ def test_hook_appends_rows_and_render_keeps_last(repo: Path, tmp_path: Path) -> 
 
 
 def test_cost_uses_model_prices() -> None:
-    prices = {"models": {"claude-opus-5-5": {"input": 4, "output": 20, "cache_write": 5, "cache_read": 0.2},
-                         "claude-opus-5": {"input": 5, "output": 25, "cache_write": 6.25, "cache_read": 0.5}},
-              "default": {"input": 1, "output": 1, "cache_write": 1, "cache_read": 1}}
-    counts = {"input_tokens": 1_000_000, "output_tokens": 1_000_000,
-              "cache_creation_input_tokens": 0, "cache_read_input_tokens": 1_000_000}
+    prices = {
+        "models": {
+            "claude-opus-5-5": {"input": 4, "output": 20, "cache_write": 5, "cache_read": 0.2},
+            "claude-opus-5": {"input": 5, "output": 25, "cache_write": 6.25, "cache_read": 0.5},
+        },
+        "default": {"input": 1, "output": 1, "cache_write": 1, "cache_read": 1},
+    }
+    counts = {
+        "input_tokens": 1_000_000,
+        "output_tokens": 1_000_000,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 1_000_000,
+    }
     assert tt.cost_of(counts, "claude-opus-5-5", prices) == pytest.approx(24.2)  # longest prefix wins
     assert tt.cost_of(counts, "claude-opus-5", prices) == pytest.approx(30.5)
     assert tt.cost_of(counts, "mystery", prices) == pytest.approx(3.0)
