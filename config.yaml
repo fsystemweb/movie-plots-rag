@@ -1,5 +1,8 @@
-# Central tunables. Typed loading (pydantic-settings, env overrides, config hash) arrives in PR-02;
-# this skeleton fixes the key names so later PRs only fill in behaviour. Never hard-code these in src/.
+# Central tunables, loaded by src/movie_rag/config.py (pydantic-settings). Never hard-code these in src/.
+# Precedence (highest first): init kwargs, environment variables, .env, this file.
+#   - Nested keys can be overridden with a double underscore, e.g. LLM__CHAT_MODEL=...
+#   - A few well-known variables are applied on top: QDRANT_URL, NEBIUS_BASE_URL, MCP_URL, LANGSMITH_PROJECT.
+# Secrets (API keys) never live here: they come from the environment only (see .env.example).
 qdrant:
   url: http://localhost:6333
   collection: movie_plots
@@ -13,11 +16,13 @@ ingest:
   chunk_tokens: 250
   chunk_overlap: 40
   batch_size: 256
+  min_plot_words: 50   # plots shorter than this are dropped by cleaning
+  random_seed: 42      # every sampling step (eval set, demo picks) uses this seed
 
 retrieval:
-  default_mode: hybrid
+  default_mode: hybrid   # dense | sparse | hybrid
   top_k: 8
-  prefetch_limit: 40
+  prefetch_limit: 50
   rrf_k: 60
   snippet_max_chars: 400
 
@@ -30,3 +35,23 @@ llm:
 
 mcp:
   url: http://localhost:8000/mcp
+
+agent:
+  prompt_version: system_v1
+
+observability:
+  project: movie-plots-rag
+  langsmith_api_url: https://api.smith.langchain.com
+
+data:
+  dataset_slug: jrobischon/wikipedia-movie-plots
+  kaggle_api_url: https://www.kaggle.com/api/v1
+  raw_dir: data/raw
+  csv_name: wiki_movie_plots_deduped.csv
+  fixture_path: tests/fixtures/movies_sample.csv
+  max_download_mb: 200
+  http_timeout_s: 60
+
+doctor:
+  http_timeout_s: 5
+  docker_timeout_s: 10

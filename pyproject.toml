@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Movie-discovery RAG agent that answers fuzzy plot questions with cited results."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "langsmith>=0.14.7",
+    "pydantic>=2.14.0",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
+]
 
 [project.optional-dependencies]
 # Later PRs add their runtime extras here; CI installs with `--all-extras --dev`.
@@ -40,6 +46,8 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "RUF"]
 [tool.ruff.lint.per-file-ignores]
 # Protected hook scripts (.claude/**) cannot be edited by the builder; ignore only what actually fires there.
 ".claude/hooks/*.py" = ["E501", "SIM114", "RUF005", "UP017", "C420"]
+# Synthetic-fixture generator: long vocabulary lists kept as readable prose (`# fmt: off`), not code style.
+"tests/fixtures/build_movies_sample.py" = ["E501"]
 
 [tool.ruff.format]
 # Protected hook scripts (.claude/**) cannot be edited by the builder, so they are not reformatted.
