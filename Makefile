@@ -67,7 +67,11 @@ download:
 doctor:
 	@$(RUN) python -m movie_rag.doctor
 
-ingest:     ; @echo "not implemented yet (PR-03)"
+# Chunk, embed and upsert into Qdrant (needs `make up`). Uses the downloaded dataset if present, else the fixture.
+# FIXTURE=1 forces the fixture; CSV=path ingests another file; RECREATE=1 rebuilds the collection first.
+ingest:
+	@$(RUN) python -m movie_rag.ingest $(if $(FIXTURE),--fixture,) $(if $(CSV),--csv $(CSV),) $(if $(RECREATE),--recreate,)
+
 demo:       ; @echo "not implemented yet (PR-04)"
 serve:      ; @echo "not implemented yet (PR-05)"
 ask:        ; @echo "not implemented yet (PR-06)"
