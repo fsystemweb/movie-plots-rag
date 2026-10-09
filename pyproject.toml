@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Movie-discovery RAG agent that answers fuzzy plot questions with cited results."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "langsmith>=0.14.7",
+    "pydantic>=2.14.0",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
+]
 
 [project.optional-dependencies]
 # Later PRs add their runtime extras here; CI installs with `--all-extras --dev`.

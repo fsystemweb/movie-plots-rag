@@ -59,8 +59,14 @@ up:
 down:
 	docker compose down
 
-download:   ; @echo "not implemented yet (PR-02)"
-doctor:     ; @echo "not implemented yet (PR-02)"
+# Without Kaggle credentials: prints what to set and exits 2 (no stack trace). FORCE=1 downloads again.
+download:
+	@$(RUN) python -m movie_rag.ingest.download $(if $(FORCE),--force,)
+
+# A report, never a gate: always exits 0.
+doctor:
+	@$(RUN) python -m movie_rag.doctor
+
 ingest:     ; @echo "not implemented yet (PR-03)"
 demo:       ; @echo "not implemented yet (PR-04)"
 serve:      ; @echo "not implemented yet (PR-05)"

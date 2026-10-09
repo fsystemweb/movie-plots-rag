@@ -42,7 +42,7 @@ def test_qdrant_tag_matches_between_compose_and_ci() -> None:
 
 @pytest.mark.parametrize(
     ("target", "pr"),
-    [("download", "PR-02"), ("ingest", "PR-03"), ("serve", "PR-05"), ("eval-smoke", "PR-09")],
+    [("ingest", "PR-03"), ("serve", "PR-05"), ("eval-smoke", "PR-09")],
 )
 def test_unimplemented_make_targets_are_stubs(target: str, pr: str) -> None:
     out = subprocess.run(["make", "-s", target], cwd=ROOT, capture_output=True, text=True, check=True).stdout

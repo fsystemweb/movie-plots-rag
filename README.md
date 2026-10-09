@@ -20,7 +20,9 @@ docker compose down         # stop it (data stays in the qdrant_storage volume)
 ```
 
 No credentials are needed to build, test or run the retrieval path. Tunables live in [`config.yaml`](config.yaml);
-environment variable names are in `.env.example`.
+environment variable names are in `.env.example`. `make doctor` shows what is configured and what to do next.
+Data: development and CI use the synthetic [`tests/fixtures/movies_sample.csv`](tests/fixtures/README.md); the real
+dataset and its licence are described in [`docs/DATASET.md`](docs/DATASET.md).
 
 ## Make targets
 
@@ -33,7 +35,8 @@ environment variable names are in `.env.example`.
 | `check` | lint + format check + typecheck + test | ready |
 | `ci` | `check` + gitleaks (if installed) + retrieval smoke eval (stub until PR-09); writes `.claude/state/ci-<NN>.ok` | ready (smoke eval: PR-09) |
 | `up` / `down` | start / stop Qdrant via docker compose | ready |
-| `download`, `doctor` | dataset download, environment report | PR-02 |
+| `download` | fetch the Kaggle CSV into `data/raw/`; without credentials prints what to set and exits 2 (`FORCE=1` re-downloads) | ready |
+| `doctor` | report on Docker, Qdrant, dataset, credentials and model ids with next steps; always exits 0 | ready |
 | `ingest` | chunk, embed and upsert into Qdrant | PR-03 |
 | `demo` | `up` + `ingest` on the fixture + sample queries | PR-04 |
 | `serve` | MCP server | PR-05 |

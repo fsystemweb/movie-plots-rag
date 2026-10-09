@@ -1,0 +1,98 @@
+# Shared, genre-level connective material for the generated plots (SYNTHETIC). Only these sentences may repeat
+# between films; the premise and the twist (see motifs_*.yaml) never do. {obj} is the film's own central object, so
+# the beats still carry film-specific content.
+beats:
+  - "Rumours about {obj} spread faster than the truth, and soon even strangers have an opinion."
+  - "{n} keeps coming back to {obj}, convinced that the answer is still there."
+  - "Nobody agrees on what {obj} really means, least of all {a}."
+  - "A week later, {obj} has cost {n} a friendship and a good night's sleep."
+  - "{a} warns that {obj} will ruin everyone involved, and {n} refuses to listen."
+  - "For one afternoon it seems that {obj} might be forgotten, but the town has other plans."
+  - "{n} writes everything about {obj} down, in case no one believes it later."
+  - "Someone begins quietly removing every trace of {obj}, and {n} starts to suspect {a}."
+  - "The more {n} learns about {obj}, the less certain it becomes who should be trusted."
+  - "An unexpected act of kindness from a stranger changes how {n} thinks about {obj}."
+  - "Over a long evening, {a} tells {n} a story about {obj} that nobody else has heard."
+  - "As the season turns, {obj} becomes the only subject anyone is willing to discuss."
+  - "{n} is forced to make an unpopular choice about {obj} and faces the consequences alone."
+  - "Late at night, {n} finds one last clue about {obj} that had been overlooked from the start."
+finales:
+  drama:
+    - "In the end, {n} accepts what cannot be repaired and begins again at dawn."
+    - "The community gathers, and a quiet reconciliation settles over the final scene."
+    - "{n} leaves the old life behind, lighter and finally free."
+    - "The last shot is an ordinary morning, with nothing and everything changed."
+  comedy:
+    - "Everything is resolved in a gloriously chaotic finale, and nobody is entirely forgiven."
+    - "The whole town squeezes into one room for a deeply awkward reveal."
+    - "{n} resolves to tell the truth from now on, for roughly a week."
+    - "The film ends with a toast, a collapsed table and a very large cake."
+  horror:
+    - "{n} survives until dawn, but something is still watching from the window."
+    - "The last frame reveals that the danger has simply moved on to the next door."
+    - "Only a recording of the final hour remains, and nobody dares to play it."
+    - "{n} locks the door and waits for the final knock."
+  western:
+    - "{n} rides out at sunrise without looking back."
+    - "The town has a new law and an old grudge buried deep in the ground."
+    - "A last standoff on the main street settles the matter once and for all."
+    - "{n} hangs up the gun belt and stays on the porch."
+  science fiction:
+    - "The survivors set a new course toward a star nobody has named."
+    - "{n} transmits the truth to everyone who can still hear it."
+    - "The machine is switched off, but its last question remains unanswered."
+    - "A new horizon rises on the viewscreen, quiet and green."
+  crime:
+    - "{n} walks away with nothing but a clean name."
+    - "The money is never found, and the city quietly changes hands."
+    - "A final meeting on an empty pier settles every account."
+    - "{n} boards a night train under a new name."
+  thriller:
+    - "The conspiracy collapses, and {n} disappears from public life."
+    - "With seconds left, {n} cuts the one wire that matters."
+    - "The closing shot reveals the true mastermind sitting calmly in the front row."
+    - "{n} survives, though the evidence is never recovered."
+  romance:
+    - "The two begin again in a small house by the sea."
+    - "A last-minute confession on a rain-slicked platform sets everything right."
+    - "They part tenderly, promising to meet in the spring."
+    - "A final kiss closes the season."
+  musical:
+    - "The curtain falls on thunderous applause and a chorus that will not go home."
+    - "{n} delivers the closing number without a trace of nerves."
+    - "The festival becomes an annual tradition, with everyone in the key of their choice."
+    - "{n} takes a final bow under the old marquee."
+  war:
+    - "The war ends a week later, and few of the survivors can speak of it."
+    - "{n} returns home to a town that has already moved on."
+    - "A single cross marks the place where the unit made its stand."
+    - "In the last shot, a line of figures walks across an open field toward the sound of church bells."
+  mystery:
+    - "The culprit is led away, and the guests depart in uneasy silence."
+    - "{n} returns to the quiet village with one question still unanswered."
+    - "In the drawing room, {n} gathers the suspects and finally explains."
+    - "The case is closed, though the last clue remains in {n}'s pocket."
+  fantasy:
+    - "The old magic settles back into the hills, and the kingdom is whole again."
+    - "{n} takes up the burden gladly and sets out at first light."
+    - "The final spell is spoken in a whisper, and the world quietly shifts."
+    - "The door closes, but the key stays in {n}'s pocket."
+  animation:
+    - "Everyone gathers under the stars to celebrate with an enormous, wobbling cake."
+    - "{n} finally reaches the end of the journey and giggles."
+    - "The last scene is a long, happy sunrise with everybody still asleep."
+    - "{n} waves goodbye to the credits and tiptoes home."
+  film noir:
+    - "{n} walks home in the rain, a little poorer and a little wiser."
+    - "The city goes on as it always does, with its lights low and its secrets high."
+    - "The last shot is an empty office and a ringing telephone."
+    - "{a} pays for the mistakes, and {n} pays for the rest."
+bridges:
+  - "Nothing is settled that night."
+  - "The weather turns."
+  - "Nobody sleeps."
+  - "It is only the beginning of a long week."
+  - "Days pass without any news at all."
+  - "The silence afterwards is worse than any argument."
+  - "Nobody says what everyone is thinking."
+  - "Time runs short, and everyone knows it."

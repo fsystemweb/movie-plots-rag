@@ -1,0 +1,225 @@
+# Hand-written, fully SYNTHETIC anchor films (part 1). Every film, person and place is invented.
+# The first six keep their original premises; the rest were added so that the evaluation set can be written
+# from films with a genuinely unique core premise.
+- year: 1947
+  title: The Forgetting Hour
+  origin: American
+  director: Marcus Hargrove
+  cast: Elias Vandermeer, Cora Delacroix, Walt Pruitt
+  genre: film noir
+  plot: >-
+    Detective Sam Garrity wakes up on a bench in a rain-soaked harbour district with a bullet graze on his
+    temple and no memory of who he is or why he carries a stranger's revolver. Piecing together his own
+    life from receipts, a hotel key and a half-burned photograph, he learns that he was hired to find a
+    missing shipping clerk who may have seen a murder. Every witness he questions seems to recognise him, and
+    none will say what he was like. As the trail leads to a nightclub owned by the city's most dangerous man,
+    Garrity begins to suspect that the person he is hunting for is himself.
+- year: 1999
+  title: Salt Lantern
+  origin: British
+  director: Alistair Lockhart
+  cast: Imogen Quayle, Edmund Ashworth, Philippa Hollis
+  genre: drama
+  plot: >-
+    After her husband drowns in a storm, lighthouse keeper's widow Morwenna Tregarth refuses to leave the
+    rock where she has lived for thirty years. The harbour authority plans to automate the light and send an
+    engineer to remove her. Over a bitter winter, the young engineer and the stubborn widow begin an uneasy
+    friendship, trading stories of the sea and of the people it has taken. When a fishing boat is lost in a
+    blizzard, the two must keep the old lamp burning by hand through a long night.
+- year: 1984
+  title: Orbit of the Last Orchard
+  origin: Russian
+  director: Boris Zaitsev
+  cast: Natalya Sokolova, Pavel Orlov, Irina Lebedeva
+  genre: science fiction
+  plot: >-
+    On a failing space station the last botanist, Yelena Marchenko, tends a small orchard of apple trees that
+    the crew regards as a harmless eccentricity. When the station's reactor starts to fail and command orders
+    the evacuation of all biological samples, Yelena discovers that the trees have been quietly cleaning the
+    station's air for years. She hides in the orchard and bargains with the crew: if the trees go, so does
+    their only chance of surviving the journey home.
+- year: 2006
+  title: The Bakery on Quill Street
+  origin: Canadian
+  director: Solange Gagnard
+  cast: Mireille Lavoisy, Duncan Sutherby, Odette Wharnecliffe
+  genre: comedy
+  plot: >-
+    When the owner of a failing Montreal bakery dies, his two feuding children must run the shop together for
+    ninety days to inherit it. Gilles, a pompous chef, and Odette, a cynical accountant, cannot agree on a
+    single loaf. A viral photograph of a collapsed cake, however, makes the bakery famous overnight, and
+    customers begin queueing around the block for the worst pastries in the city. The siblings decide to lean
+    into the disaster.
+- year: 1972
+  title: Dust Over Cinder Creek
+  origin: American
+  director: Dale Sutterfield
+  cast: Vernon Calloway, Wanda Merrick, Jasper Okonkwo
+  genre: western
+  plot: >-
+    Sheriff Amos Reed has one week left before retirement when a stranger rides into Cinder Creek with a
+    wounded boy and a map to a buried strongbox. The town's banker wants the map; so does a gang that has been
+    trailing the stranger across three territories. Reed must decide whether to hand the boy over to men with
+    legal papers or to hide him in the church bell tower and face the gang alone at sunset.
+- year: 2011
+  title: Paper Boats in the Monsoon
+  origin: Bollywood
+  director: Meera Sengupta
+  cast: Aravind Joglekar, Anjali Moitra, Devendra Chitnis
+  genre: romance
+  plot: >-
+    In Kolkata during the monsoon, a young translator named Tara receives a stack of unsigned love letters
+    written in Bengali and accidentally delivered to her door. Determined to find the intended reader, she
+    follows the clues through bookshops and tea stalls, and meets Rohan, a quiet printer who recognises the
+    handwriting. As the rains intensify and the letters run out, Tara realises that the writer has been
+    describing her all along.
+- year: 1931
+  title: The Ninth Bell of Varnholt
+  origin: British
+  director: Cedric Ormsby-Lyle
+  cast: Hester Pennywhistle, Lionel Garthwaite, Dorcas Blenkinsop
+  genre: horror
+  plot: >-
+    The remote Yorkshire village of Varnholt has a church bell that tolls once, unaided, whenever someone in the
+    parish is about to die. The villagers have learned to bar their doors and say nothing. Dr Agnes Fenwick
+    arrives to take over the practice from a predecessor who vanished, and soon counts eight deaths in her
+    first autumn, each preceded by a single clear note in the night. She asks the sexton to let her climb the
+    tower, and he refuses so violently that she suspects he is hiding something. Searching the parish
+    registers, Agnes finds that the number of tolls has been rising by one each decade since the bell was
+    recast in 1791, and that the ninth toll has never been rung. Local legend says it will come for the one
+    who rings the bell, and that is why the bell ropes were cut a century ago. Someone has spliced them
+    together again. Agnes realises that her missing predecessor spent his last weeks measuring the tower and
+    drawing a ninth bell on a sheet of music paper. She follows his notes to the crypt and finds a cast-iron
+    bell with no clapper, hidden behind the altar tomb. The sexton confesses that his family has kept the bell
+    silent for three hundred years by sacrificing a stranger whenever it threatens to ring. He intends to make
+    Agnes the next offering. During a storm that knocks out the village lamps, she climbs the tower with a
+    borrowed rope, and the silent bell begins to sway on its own. Agnes must decide whether to stop the ninth
+    toll or to let it fall on the man who has kept the village afraid. In the final scene the village wakes to
+    a morning without any sound at all.
+- year: 1956
+  title: Seven Stones for Hatsue
+  origin: Japanese
+  director: Kenzo Mizoguro
+  cast: Haruhiko Ishizumi, Sayoko Tachibara, Genjiro Aokawa
+  genre: drama
+  plot: >-
+    In a mountain village famous for its pottery, the aging potter Hatsue has promised to leave her kiln to the
+    apprentice who can fire seven perfectly matched tea bowls before the first snow. Her nephew has the
+    ambition but not the patience, and a quiet orphan girl named Chiyo has the patience but not the courage to
+    compete. Each failed firing teaches both of them something about clay, and about each other. When Hatsue
+    falls ill, the village expects the nephew to sell the kiln to a factory, and Chiyo must decide whether to
+    finish the bowls alone.
+- year: 2014
+  title: Kimchi Wars
+  origin: South_Korean
+  director: Bae Sung-ryeol
+  cast: Han Do-yun, Oh Seul-bi, Jo Min-gyeom
+  genre: comedy
+  plot: >-
+    Two rival kimchi vendors who have shared opposite stalls in a Busan market for thirty years are thrown into
+    chaos when a television crew announces a national kimchi championship. Auntie Gyeong has a secret
+    fermentation cellar and a famously bitter temper, while Auntie Pil has a recipe handed down from her
+    grandmother and an army of cousins. Both sabotage each other with increasingly absurd schemes involving
+    stolen cabbages and a rented brass band. When the market is threatened with demolition, the rivals must
+    cook one enormous batch together.
+- year: 1938
+  title: The Cartographer's Daughter
+  origin: American
+  director: Thaddeus Lowenbrook
+  cast: Beatrix Vandenhuyl, Rufus Cartwell-Pike, Eulalia Marchetti
+  genre: adventure
+  plot: >-
+    When explorer Josiah Quill dies in a Panama hotel, he leaves his daughter Maren half a map and a brass
+    sextant that points in the wrong direction. Maren, a trained surveyor who has never left Boston, inherits
+    the expedition's debts and an invitation from a rival explorer to complete the journey together. She
+    suspects that the rival wants the second half of the map for himself, so she leaves him behind and sails
+    for the Orinoco with a one-legged riverboat captain and a stowaway botanist. The river is mapped
+    wrongly on purpose: Quill drew every bend a little off so that nobody could follow him. Maren works out
+    the pattern by comparing the sextant readings to the stars, and learns to read her father's errors as a
+    hidden cipher. Deep in the interior, the party finds a flooded mission whose bell tower rises from the
+    water like a lighthouse, and inside it a chest of survey notes proving that the lost city her father
+    sought was a hoax invented to attract investors. The rival catches up with a company of armed men, still
+    determined to sell the legend. Maren trades the chest for safe passage upriver, then destroys the maps
+    page by page so that no one else will be deceived. She returns home with an accurate chart of the river,
+    the first anyone has drawn honestly, and uses it to open her own surveying firm.
+    The film closes on Maren pinning the new chart above her desk, with a small tear in one corner where her father once rested his thumb.
+- year: 1988
+  title: Midnight Ferry to Kowloon
+  origin: Hong Kong
+  director: Ling Wai-hung
+  cast: Tsui Man-kei, Fong Ka-yee, Chow Sin-lok
+  genre: thriller
+  plot: >-
+    Customs inspector Lau Tak-wing boards the last Star Ferry of the night carrying a sealed envelope that
+    proves his superior is smuggling. Within minutes he realises that two passengers are following him, and
+    that the ferry's engineer has been paid to stop the boat in the middle of the harbour. With forty
+    minutes until the next crossing, Lau must hand off the envelope to a stranger, a sleepy nurse, without
+    explaining why, and then keep both pursuers busy on deck.
+- year: 2013
+  title: Glass Harvest
+  origin: Australian
+  director: Noelene Hargadon
+  cast: Brindley Costain, Tamsin Yarrowood, Kelvin Dunmore
+  genre: science fiction
+  plot: >-
+    After eleven years without rain, the cattle station town of Mulga Flat survives by growing food inside
+    towers of recycled glass that harvest fog from the desert night. Teenage engineer Ivy Corrigan keeps the
+    towers running with spare parts and stubbornness, until a government survey team announces that the
+    aquifer feeding the fog collectors is a fraud: the water has been piped in secretly from a mining
+    company in exchange for silence. The mining company wants the town to stay dependent and quiet. Ivy
+    discovers that the glass towers have been slowly changing colour each night, recording a pattern that
+    matches seismic readings from the mine. She works out that the company's blasting is cracking the
+    aquifer, and that the water it has been selling back to the town is the town's own. The survey team
+    wants to evacuate everyone before the tower foundations fail, but nobody will leave without the
+    harvest. Ivy organises a night shift that dismantles the towers panel by panel and rebuilds them on the
+    shores of a salt lake sixty kilometres north. During the move, a dust storm traps a convoy of children
+    in the old tower at the centre of town, and Ivy has to climb its failing frame to open the roof vents
+    before the glass panels give way. In the final scene the first rain in eleven years falls on a ring of
+    half-built towers and a crowd that has finally stopped counting.
+    The credits roll over a long shot of the abandoned town, its empty glass towers catching the sunrise one panel at a time.
+- year: 1977
+  title: A Song for the Sleeping Mill
+  origin: Tamil
+  director: Murugesan Ayyadurai
+  cast: Selvaraj Annapoorani, Kalpana Vasudevan, Thirunavukkarasu
+  genre: musical
+  plot: >-
+    When the cotton mill that employs an entire Coimbatore neighbourhood is ordered to close, a young
+    weaver named Kamala organises the workers into a choir to sing at the owner's daughter's wedding. Each
+    song is a petition set to a classical raga, and each verse names a different family whose livelihood
+    would be lost. The owner's family is moved, but the board of directors is not. Kamala must teach her
+    reluctant neighbours to perform a dance of protest in front of the factory gates, in one unbroken take.
+- year: 1963
+  title: Rails Beneath the Snow
+  origin: Russian
+  director: Gleb Ostrovsky-Marin
+  cast: Anatoly Beloselsky, Vera Kuprashova, Mitya Zhelyabov
+  genre: war
+  plot: >-
+    In the winter of 1942, a railway repair crew of seven women and one wounded sergeant is stranded at a
+    siding west of Stalingrad with a locomotive that has no coal. Their orders are to keep a single
+    stretch of track open so that a hospital train can pass at dawn, but the line has been bombed in three
+    places and the nearest village was evacuated a week ago. Foreman Zinaida Pavlovna, a former schoolteacher,
+    decides to burn the wooden sleepers from an abandoned branch line to make steam, and the crew works
+    through the night to relay track by hand. Their radio picks up a German patrol only a few kilometres
+    away, and the sergeant, who can barely stand, volunteers to lead them away from the siding. Zinaida
+    refuses to let him go alone and sends the youngest worker, a fifteen-year-old named Lida, to flag down
+    the train if the signal lamp fails. At four in the morning the patrol arrives, and the women fight them
+    off from behind the locomotive using shovels, a flare gun and a stack of frozen rails. The hospital train
+    passes at dawn with its lamps dark and its wounded unaware that they have been saved. Afterwards the
+    crew walks home across the plain in a line, singing quietly, with the sergeant carried on a rail
+    stretcher. The film closes on the siding in the morning light, the track unbroken behind them and
+    nobody left to witness it.
+    A final title card records that the siding was renamed after Zinaida Pavlovna, though she never learned of it and went back to teaching.
+- year: 1992
+  title: The Last Projectionist
+  origin: Turkish
+  director: Selim Karabulut
+  cast: Hulki Yaşarel, Nermin Gökbulut, Cemal Tunçdemir
+  genre: drama
+  plot: >-
+    In a Black Sea town where the only cinema is about to be sold to a carpet warehouse, the aging
+    projectionist Ismail screens one final programme of films, chosen by a vote of the audience. Each
+    request exposes a secret: a widow asks for the romance that was playing on the night she met her
+    husband, and a teenager asks for a banned film he has never been allowed to see. Ismail splices his own
+    scenes into the reels without telling anyone.
