@@ -5,8 +5,8 @@ Orchestrator memory across restarts. Statuses: `todo · in-progress · merged ·
 | ID | Title | Branch | Status | PR | CI | QA | Attempts | Merged (UTC) | Notes |
 |---|---|---|---|---|---|---|---:|---|---|
 | PR-01 | Scaffold, tooling, CI | pr/01-scaffold | merged | [#1](https://github.com/fsystemweb/movie-plots-rag/pull/1) | ✅ | ✅ | 1 | 2026-10-09 20:14 | QA FAIL r1 (ruff ignores too broad) → PASS r2; CI blocked first by workflow YAML bug, fixed on main 7101dca |
-| PR-02 | Settings, errors, observability, data | pr/02-settings-data | in-progress | | | | 1 | | |
-| PR-03 | Chunking, embeddings, ingestion | pr/03-ingestion | todo | | | | 0 | | |
+| PR-02 | Settings, errors, observability, data | pr/02-settings-data | merged | [#2](https://github.com/fsystemweb/movie-plots-rag/pull/2) | ✅ | ✅ | 1 | 2026-10-09 20:56 | QA FAIL r1 (synthetic fixture not distinctive) → PASS r2; fixture is synthetic (no licence-verified mirror) |
+| PR-03 | Chunking, embeddings, ingestion | pr/03-ingestion | in-progress | | | | 1 | | |
 | PR-04 | Hybrid retrieval | pr/04-retrieval | todo | | | | 0 | | |
 | PR-05 | FastMCP server | pr/05-mcp-server | todo | | | | 0 | | |
 | PR-06 | Agent + CLI | pr/06-agent-cli | todo | | | | 0 | | |
