@@ -1,0 +1,121 @@
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  LANGSMITH_TRACING: "false"
+  PYTHON_VERSION: "3.12"
+  FASTEMBED_CACHE_PATH: ${{ github.workspace }}/.cache/fastembed
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+      - run: uv sync --frozen --all-extras --dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy src
+
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.15.4
+        ports: ["6333:6333"]
+    env:
+      QDRANT_URL: http://localhost:6333
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+      - name: FastEmbed model cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.FASTEMBED_CACHE_PATH }}
+          key: fastembed-${{ hashFiles('config.yaml') }}
+          restore-keys: fastembed-
+      - run: uv sync --frozen --all-extras --dev
+      - name: Wait for Qdrant
+        run: |
+          for i in $(seq 1 30); do curl -fsS "$QDRANT_URL/readyz" && exit 0; sleep 2; done; exit 1
+      - name: pytest
+        run: >
+          uv run pytest -m "not live"
+          --cov=src/movie_rag --cov-branch
+          --cov-report=term-missing --cov-report=xml
+          --cov-fail-under=80
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f .coverage ]; then
+            echo "## Coverage" >> "$GITHUB_STEP_SUMMARY"
+            uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  smoke-eval:
+    needs: tests
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'eval')
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:v1.15.4
+        ports: ["6333:6333"]
+    env:
+      QDRANT_URL: http://localhost:6333
+      NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+      - name: FastEmbed model cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.FASTEMBED_CACHE_PATH }}
+          key: fastembed-${{ hashFiles('config.yaml') }}
+          restore-keys: fastembed-
+      - run: uv sync --frozen --all-extras --dev
+      - name: Retrieval half (Hit@k / MRR on the fixture)
+        run: make eval-smoke
+      - name: LLM half (RAGAS)
+        if: env.NEBIUS_API_KEY != ''
+        run: make eval-smoke LLM=1
+      - name: LLM half skipped
+        if: env.NEBIUS_API_KEY == ''
+        run: echo "skipped: no NEBIUS_API_KEY" >> "$GITHUB_STEP_SUMMARY"

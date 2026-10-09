@@ -1,0 +1,17 @@
+{
+  "env": { "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1", "BASH_DEFAULT_TIMEOUT_MS": "600000" },
+  "permissions": {
+    "deny": ["Read(./.env)", "Read(./.env.*)", "Edit(./.github/workflows/**)", "Edit(./CLAUDE.md)", "Edit(./KICKOFF.md)",
+             "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)", "Bash(gh pr merge * --admin*)", "Bash(gh repo delete*)"],
+    "allow": ["Bash(uv *)", "Bash(make *)", "Bash(git *)", "Bash(gh pr *)", "Bash(gh run *)", "Bash(docker compose *)", "WebFetch", "WebSearch"]
+  },
+  "hooks": {
+    "PreToolUse": [{ "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|Read",
+      "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guardrails.py\"", "timeout": 90 }] }],
+    "SubagentStop": [
+      { "matcher": "builder|qa-validator",
+        "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop_gates.py\"", "timeout": 600 }] },
+      { "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/track_tokens.py\"", "timeout": 60 }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/track_tokens.py\"", "timeout": 60 }] }]
+  }
+}

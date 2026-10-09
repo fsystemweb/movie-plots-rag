@@ -1,0 +1,36 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# data and logs
+data/
+logs/
+
+# claude runtime state
+.claude/state/
+.claude/STOP
+.claude/settings.local.json
+
+# python / tooling caches
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+*.egg-info/
+build/
+dist/
+
+# coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store
