@@ -59,3 +59,9 @@ def make_settings(monkeypatch: pytest.MonkeyPatch) -> Callable[..., Settings]:
         return load_settings(env_file=None)
 
     return _make
+
+
+@pytest.fixture
+def fixture_csv() -> Path:
+    """The synthetic 300-row sample in the Kaggle schema."""
+    return FIXTURE_CSV
