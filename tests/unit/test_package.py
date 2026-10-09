@@ -42,8 +42,23 @@ def test_qdrant_tag_matches_between_compose_and_ci() -> None:
 
 @pytest.mark.parametrize(
     ("target", "pr"),
-    [("ingest", "PR-03"), ("serve", "PR-05"), ("eval-smoke", "PR-09")],
+    [("demo", "PR-04"), ("serve", "PR-05"), ("eval-smoke", "PR-09")],
 )
 def test_unimplemented_make_targets_are_stubs(target: str, pr: str) -> None:
     out = subprocess.run(["make", "-s", target], cwd=ROOT, capture_output=True, text=True, check=True).stdout
     assert out.strip() == f"not implemented yet ({pr})"
+
+
+def test_make_ingest_runs_the_ingest_module_and_forwards_its_options() -> None:
+    dry_run = subprocess.run(
+        ["make", "-n", "ingest", "FIXTURE=1", "RECREATE=1", "CSV=data/x.csv"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert "python -m movie_rag.ingest" in dry_run
+    for flag in ("--fixture", "--recreate", "--csv data/x.csv"):
+        assert flag in dry_run
+    plain = subprocess.run(["make", "-n", "ingest"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    assert "--fixture" not in plain and "--recreate" not in plain

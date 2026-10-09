@@ -6,6 +6,7 @@
 qdrant:
   url: http://localhost:6333
   collection: movie_plots
+  timeout_s: 60   # client-side timeout for every Qdrant call
 
 embeddings:
   dense_model: BAAI/bge-small-en-v1.5

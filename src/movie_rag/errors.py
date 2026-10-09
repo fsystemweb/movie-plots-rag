@@ -33,3 +33,7 @@ class DataError(MovieRagError):
 
 class DownloadError(MovieRagError):
     """The dataset download failed for a reason other than missing credentials."""
+
+
+class IndexingError(MovieRagError):
+    """The vector index (Qdrant) is incompatible with the configuration or disagrees with what was written."""
