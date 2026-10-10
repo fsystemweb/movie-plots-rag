@@ -134,6 +134,7 @@ class EvalConfig(_Section):
     dataset_name: str = Field(min_length=1)  # LangSmith dataset created by `python -m movie_rag.eval.upload`
     k_values: list[int] = Field(min_length=1)  # Hit@k cut-offs, strictly increasing; the largest is the retrieval depth
     reports_dir: Path  # eval_<mode>.json and EVAL_RESULTS.md
+    readme_path: Path  # the README whose marked results block `make report` rewrites
     smoke_min_mrr: float = Field(ge=0, le=1)  # floor for `make eval-smoke`
     smoke_llm_per_type: int = Field(gt=0)  # questions per type in the LLM half of `make eval-smoke LLM=1`
     ragas_concurrency: int = Field(gt=0)  # RAGAS metric calls in flight at once

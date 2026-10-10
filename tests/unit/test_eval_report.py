@@ -15,11 +15,15 @@ from movie_rag.eval.agent_eval import AgentMetrics
 from movie_rag.eval.metrics import AbstentionMetrics, Summary
 from movie_rag.eval.ragas_judge import MetricSummary
 from movie_rag.eval.report import (
+    README_BEGIN,
+    README_END,
     EvalReport,
     LlmSection,
     read_reports,
     render_markdown,
+    render_readme_block,
     report_path,
+    update_readme,
     write_report,
 )
 from movie_rag.eval.runner import skipped_llm
@@ -202,3 +206,57 @@ def test_nothing_to_render_is_an_error() -> None:
 def test_the_langsmith_state_is_listed_per_mode(reports: list[EvalReport]) -> None:
     text = render_markdown(reports)
     assert "| dense | not requested |" in text and "| hybrid | not requested |" in text
+
+
+# --- README block ------------------------------------------------------------------------------------------------
+
+
+def test_the_readme_block_carries_the_json_numbers_between_the_markers(reports: list[EvalReport]) -> None:
+    block = render_readme_block(reports)
+    assert block.startswith(README_BEGIN) and block.endswith(README_END)
+    for report in reports:
+        overall = report.retrieval.overall
+        assert overall.mrr is not None
+        row = next(line for line in block.splitlines() if line.startswith(f"| {report.mode} | {overall.n} |"))
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        ks = report.retrieval.k_values
+        assert cells[2 : 2 + len(ks)] == [f"{overall.hit_at_k[k]:.3f}" for k in ks]
+        assert cells[2 + len(ks)] == f"{overall.mrr:.3f}"
+        assert report.git_sha in block and report.generated_at in block
+    assert "reports/EVAL_RESULTS.md" in block
+
+
+def test_the_readme_block_labels_pending_llm_metrics_instead_of_showing_numbers(
+    settings: Settings, reports: list[EvalReport]
+) -> None:
+    block = render_readme_block([pending(settings, r) for r in reports])
+    llm_rows = [
+        line for line in block.splitlines() if line.startswith(("| RAGAS", "| Correct", "| False", "| Citation"))
+    ]
+    assert len(llm_rows) == 7 and all(row.count("pending credentials") == 3 for row in llm_rows)
+
+
+def test_the_readme_block_shows_completed_llm_metrics(settings: Settings, reports: list[EvalReport]) -> None:
+    block = render_readme_block([with_llm(r, completed(settings)) for r in reports])
+    assert "| RAGAS faithfulness | 0.910 (2/3) |" in block and "pending credentials" not in block
+
+
+def test_a_readme_block_needs_reports() -> None:
+    with pytest.raises(EvalError, match="nothing to render"):
+        render_readme_block([])
+
+
+def test_update_readme_replaces_only_the_marked_region() -> None:
+    text = f"before\n{README_BEGIN}\nold $1 \\1 numbers\n{README_END}\nafter\n"
+    block = f"{README_BEGIN}\nnew $2 \\2\n{README_END}"
+    assert update_readme(text, block) == f"before\n{block}\nafter\n"
+    assert update_readme(update_readme(text, block), block) == update_readme(text, block)
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["no markers\n", f"{README_BEGIN}\nnever closed\n", f"{README_BEGIN}{README_END}\n{README_BEGIN}{README_END}"],
+)
+def test_update_readme_refuses_a_missing_or_duplicated_block(text: str) -> None:
+    with pytest.raises(EvalError, match="exactly one results block"):
+        update_readme(text, "x")
