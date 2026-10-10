@@ -122,7 +122,7 @@ def test_hook_appends_rows_and_render_keeps_last(repo: Path, tmp_path: Path) -> 
     assert run([], repo, json.dumps(ev)).returncode == 0  # same agent twice -> render keeps one
     rows = [json.loads(x) for x in (repo / "docs" / "token_usage.jsonl").read_text().splitlines()]
     assert len(rows) == 2
-    assert rows[0]["pr"] == "PR-01" and rows[0]["agent"] == "builder" and rows[0]["agent_key"] == "ag1"
+    assert rows[0]["pr"] == "PR-01" and rows[0]["agent"] == "builder" and rows[0]["agent_ref"] == "ag1"
     assert rows[0]["output_tokens"] == 37
 
     main_t = fake_transcript(tmp_path / "main.jsonl")

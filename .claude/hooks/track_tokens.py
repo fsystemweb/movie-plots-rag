@@ -3,7 +3,7 @@
 
 Hook mode (Stop / SubagentStop): sum message.usage from the transcript, deduplicated by message.id, and append one
 JSON row to docs/token_usage.jsonl.
-`--render`: rebuild docs/TOKEN_USAGE.md from the last row per (session, agent_key).
+`--render`: rebuild docs/TOKEN_USAGE.md from the last row per (session, agent_ref).
 Stdlib only.
 """
 
@@ -113,7 +113,7 @@ def record(data: dict[str, Any]) -> dict[str, Any] | None:
         "pr": current_pr(root),
         "session": data.get("session_id") or "unknown",
         "agent": data.get("agent_type") or ("subagent" if agent_id else "orchestrator"),
-        "agent_key": agent_id or "main",
+        "agent_ref": agent_id or "main",
         **usage["totals"],
         "by_model": usage["by_model"],
     }
@@ -161,7 +161,7 @@ def row_cost(row: dict[str, Any], prices: dict[str, Any]) -> float:
 def latest_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     last: dict[tuple[str, str], dict[str, Any]] = {}
     for r in rows:
-        last[(str(r.get("session")), str(r.get("agent_key")))] = r
+        last[(str(r.get("session")), str(r.get("agent_ref")))] = r
     return list(last.values())
 
 
