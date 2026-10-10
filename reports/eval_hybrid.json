@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "mode": "hybrid",
-  "generated_at": "2026-10-10T12:06:44+00:00",
-  "git_sha": "cf2237c",
+  "generated_at": "2026-10-10T13:41:17+00:00",
+  "git_sha": "6ffa441",
   "config_hash": "7fc61e900353",
   "embedding_model": "BAAI/bge-small-en-v1.5",
   "sparse_model": "Qdrant/bm25",
@@ -73,9 +73,9 @@
     },
     "latency_ms": {
       "n": 40,
-      "p50": 68.375,
-      "p95": 77.67199999999998,
-      "mean": 67.15
+      "p50": 34.165000000000006,
+      "p95": 69.4255,
+      "mean": 40.8975
     },
     "per_question": [
       {
@@ -106,7 +106,7 @@
           0.2
         ],
         "rank": 2,
-        "latency_ms": 68.49
+        "latency_ms": 77.41
       },
       {
         "question_id": "fuzzy-02",
@@ -117,26 +117,26 @@
         ],
         "ranked_movie_ids": [
           "the-forgetting-hour-1947-282",
+          "the-coat-with-the-pistol-1955-106",
           "the-permanent-passenger-1967-222",
+          "the-woman-s-shadow-1967-169",
           "atlas-of-lost-birthdays-2015-248",
+          "rails-beneath-the-snow-1963-277",
           "salvage-rights-1981-22",
-          "monsoon-heist-2005-280",
-          "the-wedding-dress-1958-109",
-          "the-robber-s-portrait-1998-243",
-          "the-woman-s-shadow-1967-169"
+          "the-unexplained-figure-in-the-photographs-1954-255"
         ],
         "scores": [
           0.6666667,
           0.5,
+          0.5,
+          0.5,
           0.33333334,
           0.33333334,
-          0.25,
-          0.25,
-          0.24358976,
-          0.2
+          0.33333334,
+          0.33333334
         ],
         "rank": 1,
-        "latency_ms": 64.13
+        "latency_ms": 71.24
       },
       {
         "question_id": "fuzzy-03",
@@ -166,7 +166,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 68.48
+        "latency_ms": 66.08
       },
       {
         "question_id": "fuzzy-04",
@@ -177,8 +177,8 @@
         ],
         "ranked_movie_ids": [
           "atlas-of-lost-birthdays-2015-248",
-          "the-ticket-to-nowhere-1950-226",
           "the-seagull-family-pier-1986-137",
+          "the-ticket-to-nowhere-1950-226",
           "the-sealed-border-envelope-1987-157",
           "the-suit-lining-account-numbers-1997-212",
           "seven-days-of-rain-in-tsarskoye-1927-253",
@@ -196,7 +196,7 @@
           0.1936937
         ],
         "rank": 1,
-        "latency_ms": 64.98
+        "latency_ms": 66.48
       },
       {
         "question_id": "fuzzy-05",
@@ -226,7 +226,7 @@
           0.16666667
         ],
         "rank": 1,
-        "latency_ms": 60.78
+        "latency_ms": 34.2
       },
       {
         "question_id": "fuzzy-06",
@@ -256,7 +256,7 @@
           0.1883117
         ],
         "rank": 1,
-        "latency_ms": 64.74
+        "latency_ms": 59.24
       },
       {
         "question_id": "fuzzy-07",
@@ -286,7 +286,7 @@
           0.16849817
         ],
         "rank": 1,
-        "latency_ms": 72.16
+        "latency_ms": 33.74
       },
       {
         "question_id": "fuzzy-08",
@@ -316,7 +316,7 @@
           0.25
         ],
         "rank": 1,
-        "latency_ms": 73.45
+        "latency_ms": 64.5
       },
       {
         "question_id": "fuzzy-09",
@@ -327,13 +327,13 @@
         ],
         "ranked_movie_ids": [
           "the-hollow-crown-of-marsh-end-1996-113",
-          "the-minefield-garden-1976-144",
           "kerosene-summer-1975-49",
+          "the-minefield-garden-1976-144",
           "the-cartographer-s-daughter-1938-81",
           "the-faces-in-the-honeycomb-1997-271",
-          "the-geese-uprising-1964-215",
           "the-drifting-capsule-1973-201",
-          "the-filing-cabinet-2005-122"
+          "the-filing-cabinet-2005-122",
+          "the-geese-uprising-1964-215"
         ],
         "scores": [
           1.0,
@@ -346,7 +346,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 81.51
+        "latency_ms": 69.33
       },
       {
         "question_id": "fuzzy-10",
@@ -361,8 +361,8 @@
           "atlas-of-lost-birthdays-2015-248",
           "the-empty-warehouse-fire-1976-75",
           "echo-chamber-9-2016-136",
-          "the-sold-island-1929-292",
           "the-cartographer-s-daughter-1938-81",
+          "the-sold-island-1929-292",
           "the-coordinate-logbook-1935-131"
         ],
         "scores": [
@@ -376,7 +376,7 @@
           0.32692307
         ],
         "rank": 1,
-        "latency_ms": 79.61
+        "latency_ms": 37.87
       },
       {
         "question_id": "exact-01",
@@ -393,7 +393,7 @@
           "the-cigarette-tray-messages-1961-65",
           "the-landslide-week-1965-195",
           "the-kinder-translation-1921-153",
-          "the-thirteenth-chime-1996-116"
+          "the-replacement-flowerpot-1922-158"
         ],
         "scores": [
           0.8333334,
@@ -406,7 +406,7 @@
           0.25
         ],
         "rank": 1,
-        "latency_ms": 77.57
+        "latency_ms": 29.58
       },
       {
         "question_id": "exact-02",
@@ -436,7 +436,7 @@
           0.2
         ],
         "rank": 1,
-        "latency_ms": 77.12
+        "latency_ms": 30.52
       },
       {
         "question_id": "exact-03",
@@ -466,7 +466,7 @@
           0.2909091
         ],
         "rank": 1,
-        "latency_ms": 66.83
+        "latency_ms": 31.78
       },
       {
         "question_id": "exact-04",
@@ -496,7 +496,7 @@
           0.19166666
         ],
         "rank": 1,
-        "latency_ms": 68.73
+        "latency_ms": 30.51
       },
       {
         "question_id": "exact-05",
@@ -507,13 +507,13 @@
         ],
         "ranked_movie_ids": [
           "echo-chamber-9-2016-136",
-          "the-overheard-midnight-call-1968-1",
           "the-midnight-patient-1961-96",
+          "the-overheard-midnight-call-1968-1",
           "the-unbroadcast-script-2014-278",
-          "the-reservoir-stone-1951-168",
           "the-rearranged-diary-2013-264",
+          "the-reservoir-stone-1951-168",
           "the-concert-ticket-2000-224",
-          "the-delegates-dialect-2016-189"
+          "the-ninth-bell-of-varnholt-1931-14"
         ],
         "scores": [
           1.0,
@@ -526,7 +526,7 @@
           0.25
         ],
         "rank": 1,
-        "latency_ms": 69.28
+        "latency_ms": 31.67
       },
       {
         "question_id": "exact-06",
@@ -556,7 +556,7 @@
           0.21978024
         ],
         "rank": 1,
-        "latency_ms": 67.79
+        "latency_ms": 31.47
       },
       {
         "question_id": "exact-07",
@@ -586,7 +586,7 @@
           0.29166666
         ],
         "rank": 1,
-        "latency_ms": 68.68
+        "latency_ms": 33.32
       },
       {
         "question_id": "exact-08",
@@ -598,10 +598,10 @@
         "ranked_movie_ids": [
           "the-stone-coat-1984-173",
           "midnight-ferry-to-kowloon-1988-250",
-          "the-silent-film-heroine-1973-52",
           "the-sea-monster-costume-1956-261",
-          "the-violin-case-1960-206",
+          "the-silent-film-heroine-1973-52",
           "a-song-for-the-sleeping-mill-1977-185",
+          "the-violin-case-1960-206",
           "the-delegates-dialect-2016-189",
           "the-laundry-line-alibi-1980-130"
         ],
@@ -616,7 +616,7 @@
           0.2
         ],
         "rank": 2,
-        "latency_ms": 60.79
+        "latency_ms": 31.84
       },
       {
         "question_id": "exact-09",
@@ -646,7 +646,7 @@
           0.20512821
         ],
         "rank": 2,
-        "latency_ms": 69.19
+        "latency_ms": 32.41
       },
       {
         "question_id": "exact-10",
@@ -676,7 +676,7 @@
           0.21428572
         ],
         "rank": 2,
-        "latency_ms": 72.13
+        "latency_ms": 34.13
       },
       {
         "question_id": "filtered-01",
@@ -692,7 +692,7 @@
           1.0
         ],
         "rank": 1,
-        "latency_ms": 72.76
+        "latency_ms": 33.41
       },
       {
         "question_id": "filtered-02",
@@ -716,7 +716,7 @@
           0.16666667
         ],
         "rank": 1,
-        "latency_ms": 74.98
+        "latency_ms": 36.45
       },
       {
         "question_id": "filtered-03",
@@ -732,7 +732,7 @@
           1.0
         ],
         "rank": 1,
-        "latency_ms": 67.84
+        "latency_ms": 33.78
       },
       {
         "question_id": "filtered-04",
@@ -748,7 +748,7 @@
           1.0
         ],
         "rank": 1,
-        "latency_ms": 66.72
+        "latency_ms": 41.55
       },
       {
         "question_id": "filtered-05",
@@ -759,8 +759,8 @@
         ],
         "ranked_movie_ids": [
           "a-song-for-the-sleeping-mill-1977-185",
-          "the-empty-house-aria-1970-39",
-          "the-bird-summoning-flute-1960-272"
+          "the-bird-summoning-flute-1960-272",
+          "the-empty-house-aria-1970-39"
         ],
         "scores": [
           1.0,
@@ -768,7 +768,7 @@
           0.5833334
         ],
         "rank": 1,
-        "latency_ms": 56.16
+        "latency_ms": 38.15
       },
       {
         "question_id": "filtered-06",
@@ -786,7 +786,7 @@
           0.6666667
         ],
         "rank": 1,
-        "latency_ms": 64.96
+        "latency_ms": 35.75
       },
       {
         "question_id": "filtered-07",
@@ -804,7 +804,7 @@
           0.6666667
         ],
         "rank": 1,
-        "latency_ms": 70.19
+        "latency_ms": 43.71
       },
       {
         "question_id": "filtered-08",
@@ -822,7 +822,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 62.28
+        "latency_ms": 38.21
       },
       {
         "question_id": "filtered-09",
@@ -840,7 +840,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 70.13
+        "latency_ms": 57.34
       },
       {
         "question_id": "filtered-10",
@@ -866,7 +866,7 @@
           0.14285715
         ],
         "rank": 1,
-        "latency_ms": 73.06
+        "latency_ms": 38.92
       },
       {
         "question_id": "unanswerable-01",
@@ -881,7 +881,7 @@
           "the-gridded-martian-rain-2015-265",
           "the-church-basement-kitchen-2005-2",
           "the-recycled-water-signal-1993-8",
-          "the-children-who-follow-the-van-1979-60"
+          "the-bakery-on-quill-street-2006-76"
         ],
         "scores": [
           0.7,
@@ -894,7 +894,7 @@
           0.25
         ],
         "rank": null,
-        "latency_ms": 68.27
+        "latency_ms": 31.38
       },
       {
         "question_id": "unanswerable-02",
@@ -922,7 +922,7 @@
           0.16666667
         ],
         "rank": null,
-        "latency_ms": 74.19
+        "latency_ms": 42.01
       },
       {
         "question_id": "unanswerable-03",
@@ -950,7 +950,7 @@
           0.2
         ],
         "rank": null,
-        "latency_ms": 70.06
+        "latency_ms": 38.62
       },
       {
         "question_id": "unanswerable-04",
@@ -960,8 +960,8 @@
         "ranked_movie_ids": [
           "the-diner-photograph-1987-84",
           "the-hollow-crown-of-marsh-end-1996-113",
-          "the-refrigerated-capsule-2010-161",
           "salvage-rights-1981-22",
+          "the-refrigerated-capsule-2010-161",
           "black-tulip-hotel-1971-190",
           "the-schoolhouse-target-range-2015-171",
           "the-dough-creatures-1971-287",
@@ -978,7 +978,7 @@
           0.2
         ],
         "rank": null,
-        "latency_ms": 58.79
+        "latency_ms": 32.66
       },
       {
         "question_id": "unanswerable-05",
@@ -1006,7 +1006,7 @@
           0.22916667
         ],
         "rank": null,
-        "latency_ms": 56.94
+        "latency_ms": 34.08
       },
       {
         "question_id": "unanswerable-06",
@@ -1014,14 +1014,14 @@
         "question": "Is there a mockumentary about a Scandinavian curling team that turns into a cult sensation?",
         "gold_movie_ids": [],
         "ranked_movie_ids": [
-          "kimchi-wars-2014-114",
           "glass-harvest-2013-198",
+          "kimchi-wars-2014-114",
           "the-landslide-week-1965-195",
           "the-circus-restaurant-2000-108",
           "the-premature-wake-1977-233",
           "the-stolen-violin-1946-254",
-          "the-freed-lamp-spirit-1987-285",
-          "the-climbing-hydroponic-vines-1986-28"
+          "the-climbing-hydroponic-vines-1986-28",
+          "the-freed-lamp-spirit-1987-285"
         ],
         "scores": [
           0.5,
@@ -1034,7 +1034,7 @@
           0.2
         ],
         "rank": null,
-        "latency_ms": 56.73
+        "latency_ms": 33.14
       },
       {
         "question_id": "unanswerable-07",
@@ -1062,7 +1062,7 @@
           0.17777778
         ],
         "rank": null,
-        "latency_ms": 58.04
+        "latency_ms": 33.85
       },
       {
         "question_id": "unanswerable-08",
@@ -1072,7 +1072,7 @@
         "ranked_movie_ids": [],
         "scores": [],
         "rank": null,
-        "latency_ms": 52.57
+        "latency_ms": 29.65
       },
       {
         "question_id": "unanswerable-09",
@@ -1082,8 +1082,8 @@
         "ranked_movie_ids": [
           "the-ballads-of-passing-ships-1941-140",
           "the-sold-island-1929-292",
-          "the-permanent-passenger-1967-222",
           "the-cigarette-tray-messages-1961-65",
+          "the-permanent-passenger-1967-222",
           "the-four-dark-minutes-1977-210",
           "the-refrigerated-capsule-2010-161",
           "salt-lantern-1999-67",
@@ -1100,7 +1100,7 @@
           0.33333334
         ],
         "rank": null,
-        "latency_ms": 61.57
+        "latency_ms": 35.03
       },
       {
         "question_id": "unanswerable-10",
@@ -1110,7 +1110,7 @@
         "ranked_movie_ids": [],
         "scores": [],
         "rank": null,
-        "latency_ms": 53.32
+        "latency_ms": 30.89
       }
     ]
   },
