@@ -45,3 +45,18 @@ class RetrievalError(MovieRagError):
 
 class MovieNotFoundError(MovieRagError):
     """No film matches the given id or title."""
+
+
+class AgentError(MovieRagError):
+    """The agent could not run for a reason the user can act on (bad prompt version, unusable model output)."""
+
+
+class McpUnavailableError(AgentError):
+    """The MCP server the agent gets its tools from cannot be reached (not started, wrong ``mcp.url``)."""
+
+    def __init__(self, url: str) -> None:
+        self.url = url
+        super().__init__(
+            f"The movie MCP server at {url} is unreachable: start it with `make serve` "
+            "(after `make up` and `make ingest`) and retry."
+        )

@@ -83,7 +83,11 @@ serve:
 	@if [ -n "$(DOCKER)" ]; then docker compose up -d --build --wait mcp-server; \
 	else $(RUN) python -m movie_rag.mcp_server $(if $(STDIO),--transport stdio,); fi
 
-ask:        ; @echo "not implemented yet (PR-06)"
+# Ask the agent one question (needs `make serve` and NEBIUS_API_KEY; without the key it prints the hint and exits 2).
+# MODE=dense|sparse|hybrid pins the retrieval mode; JSON=1 prints the whole answer object.
+ask:
+	@$(RUN) python -m movie_rag.agent $(if $(MODE),--mode $(MODE),) $(if $(JSON),--json,) "$(Q)"
+
 ui:         ; @echo "not implemented yet (PR-07)"
 eval:       ; @echo "not implemented yet (PR-09)"
 eval-smoke: ; @echo "not implemented yet (PR-09)"

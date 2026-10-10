@@ -24,11 +24,10 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 
 from fakes import FakeEmbedder, RunCapture
+from index_fixture import Index, premise
 from movie_rag import mcp_server
-from movie_rag.config import Settings, load_settings
-from movie_rag.ingest.clean import MovieRecord, clean_csv
-from movie_rag.ingest.index import ensure_collection
-from movie_rag.ingest.pipeline import ingest_csv, write_records
+from movie_rag.config import Settings
+from movie_rag.ingest.clean import MovieRecord
 from movie_rag.mcp_server import TOOL_NAMES, build_server
 from movie_rag.retrieval import Retriever
 
@@ -52,26 +51,6 @@ LLM_PACKAGES = {
 }
 
 
-class Index:
-    """The fixture in an in-memory collection plus one remake, so that a title can be ambiguous."""
-
-    def __init__(self) -> None:
-        self.settings = load_settings(env_file=None)
-        self.client = QdrantClient(":memory:")
-        ingest_csv(self.settings, FIXTURE, client=self.client, embedder=FakeEmbedder(), recreate=True)
-        records, _ = clean_csv(FIXTURE, self.settings.ingest.min_plot_words)
-        self.records = records
-        self.original = records[0]
-        self.remake = self.original.model_copy(
-            update={"movie_id": f"{self.original.movie_id}-remake", "release_year": self.original.release_year + 30}
-        )
-        ensure_collection(self.client, self.settings)
-        write_records(self.client, FakeEmbedder(), self.settings, [self.remake])
-
-    def retriever(self) -> Retriever:
-        return Retriever(self.settings, client=self.client, embedder=FakeEmbedder())
-
-
 @pytest.fixture(scope="module")
 def index() -> Index:
     return Index()
@@ -81,10 +60,6 @@ def index() -> Index:
 async def client(index: Index) -> AsyncIterator[Client[Any]]:
     async with Client(build_server(index.settings, index.retriever)) as c:
         yield c
-
-
-def premise(record: MovieRecord) -> str:
-    return ". ".join(record.plot.split(". ")[:2])
 
 
 def unique_title_record(index: Index) -> MovieRecord:

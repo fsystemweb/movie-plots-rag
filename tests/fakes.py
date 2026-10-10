@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import math
 from collections import Counter
@@ -10,11 +11,17 @@ from collections.abc import Sequence
 from typing import Any
 from unittest.mock import MagicMock
 
+from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessage, BaseMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.tools import BaseTool
 from langsmith import Client
 from langsmith.run_helpers import tracing_context
+from pydantic import Field
 from qdrant_client import models as m
 
 SPARSE_SPACE = 1 << 20
+_CALL_IDS = itertools.count(1)
 
 
 def _bucket(word: str, modulo: int) -> int:
@@ -103,3 +110,48 @@ class RunCapture:
     def payloads(self) -> str:
         """Everything that would have been uploaded, as one string (for secret scans)."""
         return " ".join(str(call.kwargs.get("data")) for call in self.session.request.call_args_list)
+
+
+class ScriptedChatModel(BaseChatModel):
+    """A tool-calling chat model that replays scripted replies (no network, no key).
+
+    ``replies`` are returned in order; once they run out the last one repeats (a model that never stops calling tools
+    is just ``[tool_call_message(...)]``). ``prompts`` records the messages each call received.
+    """
+
+    replies: list[AIMessage]
+    prompts: list[list[BaseMessage]] = Field(default_factory=list)
+    bound_tool_names: list[str] = Field(default_factory=list)
+
+    @property
+    def _llm_type(self) -> str:
+        return "scripted"
+
+    def bind_tools(self, tools: Sequence[Any], **kwargs: Any) -> ScriptedChatModel:  # type: ignore[override]
+        self.bound_tool_names = [t.name for t in tools if isinstance(t, BaseTool)]
+        return self
+
+    def _generate(
+        self, messages: list[BaseMessage], stop: list[str] | None = None, run_manager: Any = None, **kwargs: Any
+    ) -> ChatResult:
+        self.prompts.append(list(messages))
+        turn = len(self.prompts) - 1
+        reply = self.replies[min(turn, len(self.replies) - 1)]
+        if reply.tool_calls:  # a repeated reply must not reuse tool call ids
+            reply = reply.model_copy(
+                update={"tool_calls": [{**call, "id": f"call_{next(_CALL_IDS)}"} for call in reply.tool_calls]}
+            )
+        return ChatResult(generations=[ChatGeneration(message=reply)])
+
+
+def tool_call_message(*calls: tuple[str, dict[str, Any]], tokens: int = 0) -> AIMessage:
+    """An assistant turn that requests the given ``(tool name, args)`` calls at once."""
+    message = AIMessage(
+        content="",
+        tool_calls=[
+            {"name": name, "args": args, "id": f"call_{next(_CALL_IDS)}", "type": "tool_call"} for name, args in calls
+        ],
+    )
+    if tokens:
+        message.usage_metadata = {"input_tokens": tokens, "output_tokens": 1, "total_tokens": tokens + 1}
+    return message
