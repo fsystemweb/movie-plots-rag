@@ -72,7 +72,11 @@ doctor:
 ingest:
 	@$(RUN) python -m movie_rag.ingest $(if $(FIXTURE),--fixture,) $(if $(CSV),--csv $(CSV),) $(if $(RECREATE),--recreate,)
 
-demo:       ; @echo "not implemented yet (PR-04)"
+# Qdrant + the fixture + the sample query (Q="..." overrides retrieval.demo_query) in dense, sparse and hybrid mode. Needs no credentials.
+demo: up
+	@$(MAKE) --no-print-directory ingest FIXTURE=1
+	@$(RUN) python -m movie_rag.retrieval --mode all $(if $(Q),"$(Q)",)
+
 serve:      ; @echo "not implemented yet (PR-05)"
 ask:        ; @echo "not implemented yet (PR-06)"
 ui:         ; @echo "not implemented yet (PR-07)"
