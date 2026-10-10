@@ -56,3 +56,9 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-07] Only `$` is escaped in text rendered as Streamlit markdown (titles, snippets, model answers); a model answer containing other markdown (headings, images) is rendered as such.
 - [PR-07] No `ui` compose service: neither §1 nor §6 asks for one. Add it if the demo should start without a local Python environment.
 - [PR-07] The AppTest tests run dense mode against the in-memory engine because hybrid is not meaningful there (see PR-04); the real hybrid path of the page was checked by hand against Docker Qdrant (screenshot) and runs in CI only through the retrieval integration tests.
+- [PR-07 QA m1] Agent mode ignores sidebar top_k and only hints filters in the question text (`ui/service.py:253-258`, `ui/app.py:54`; caption overstates "passed on"). Extend the mode-pinning tool interceptor to override `search_movies` args.
+- [PR-07 QA m2] `md()` escapes only `$` (`ui/app.py:29-31`): titles/plots can mis-render; model answers can embed auto-loading images (prompt-injection via indexed plot text).
+- [PR-07 QA m3] `_session` (`ui/service.py:183-191`) reports read timeouts / HTTP 5xx during a tool call as "server unreachable, run make serve".
+- [PR-07 QA m4] Failures in `get_service()` or rendering reach Streamlit's default traceback display (`ui/app.py:23-26,177`).
+- [PR-07 QA m5] `tests/integration/test_ui_mcp.py:57` always uses an in-memory index even when `QDRANT_URL` is set; page hybrid mode has no automated real-Qdrant test.
+- [PR-07 QA nits] `use_container_width` deprecated in Streamlit 1.65 (`ui/app.py:188`); `Span.trace_url` `get_url()` may block on a LangSmith call (`observability.py:157`).
