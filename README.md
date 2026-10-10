@@ -48,6 +48,25 @@ make ingest FIXTURE=1    # force the fixture;  CSV=path/to.csv ingests another f
 * **Models** are downloaded on first use into FastEmbed's cache (`FASTEMBED_CACHE_PATH`, default
   `<tmp>/fastembed_cache`).
 
+## Retrieval
+
+```bash
+make demo                                              # Qdrant + fixture + the sample query in all three modes
+uv run python -m movie_rag.retrieval "a detective loses his memory" --mode hybrid --top-k 5 \
+    --year-from 1950 --year-to 1999 --genre thriller   # --origin too; omit --mode to compare all three
+```
+
+* **One code path.** `dense`, `sparse` and `hybrid` all go through `Retriever.search` and one `query_points_groups`
+  call; the mode only picks the query: one named vector (`dense` or `bm25`), or two prefetches (the same two vectors,
+  `retrieval.prefetch_limit` chunks each) fused with RRF.
+* **Filters** (`year_from`, `year_to`, `genre`, `origin`) are built once and attached to **each prefetch** in hybrid mode
+  (and as `query_filter` in the single-vector modes). `genre` and `origin` match exactly, case-insensitively.
+* **One row per film.** Results are grouped by `movie_id`; each film shows its best chunk (`chunk_idx`), the score of
+  that chunk, a snippet of at most `retrieval.snippet_max_chars` characters and its Wikipedia link. Scores are only
+  comparable within a mode (cosine, BM25 or RRF). `Retriever.get_movie` reads the whole plot from chunk 0 by id.
+* **Parameters** (`config.yaml`, `retrieval:`): `default_mode`, `top_k`, `prefetch_limit`, `snippet_max_chars`,
+  `demo_query`. The RRF constant is not configurable on Qdrant 1.15 (needs qdrant-client and server 1.16).
+
 ## Make targets
 
 | Target | What it does | Status |
@@ -62,7 +81,7 @@ make ingest FIXTURE=1    # force the fixture;  CSV=path/to.csv ingests another f
 | `download` | fetch the Kaggle CSV into `data/raw/`; without credentials prints what to set and exits 2 (`FORCE=1` re-downloads) | ready |
 | `doctor` | report on Docker, Qdrant, dataset, credentials and model ids with next steps; always exits 0 | ready |
 | `ingest` | chunk, embed and upsert into Qdrant; downloaded dataset if present, else the fixture (`FIXTURE=1` forces it, `CSV=path`, `RECREATE=1`) | ready |
-| `demo` | `up` + `ingest` on the fixture + sample queries | PR-04 |
+| `demo` | `up` + `ingest` on the fixture + the sample query in dense, sparse and hybrid mode (`Q="..."` to ask your own); no credentials | ready |
 | `serve` | MCP server | PR-05 |
 | `ask` | CLI agent | PR-06 |
 | `ui` | Streamlit page | PR-07 |
