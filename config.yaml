@@ -49,6 +49,8 @@ mcp:
 
 agent:
   prompt_version: system_v1
+  max_citations: 5   # films cited per answer (the prompt asks for at most this many)
+  mcp_timeout_s: 30  # HTTP timeout of the agent's MCP connection (per request)
 
 observability:
   project: movie-plots-rag

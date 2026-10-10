@@ -89,7 +89,9 @@ class McpConfig(_Section):
 
 
 class AgentConfig(_Section):
-    prompt_version: str
+    prompt_version: str = Field(pattern=r"^[a-z0-9_]+$")
+    max_citations: int = Field(gt=0)
+    mcp_timeout_s: float = Field(gt=0)
 
 
 class ObservabilityConfig(_Section):
