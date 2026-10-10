@@ -13,6 +13,10 @@ BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 PR_NUM := $(shell echo '$(BRANCH)' | sed -nE 's|^pr/([0-9]+)-.*|\1|p')
 CI_ID := $(if $(PR_NUM),$(PR_NUM),$(subst /,-,$(BRANCH)))
 
+# `make ... LLM=1` would otherwise reach the Python process as the environment variable LLM, which pydantic-settings
+# reads as the whole `llm:` section of config.yaml and rejects.
+unexport LLM
+
 .PHONY: help setup lint format typecheck test cov check ci up down download ingest serve ask ui \
         eval eval-smoke report doctor demo
 
@@ -93,6 +97,17 @@ ask:
 ui:
 	@$(RUN) streamlit run src/movie_rag/ui/app.py $(if $(PORT),--server.port $(PORT),) $(if $(HEADLESS),--server.headless true,)
 
-eval:       ; @echo "not implemented yet (PR-09)"
-eval-smoke: ; @echo "not implemented yet (PR-09)"
-report:     ; @echo "not implemented yet (PR-09)"
+# Retrieval metrics (Hit@k, MRR, latency) per mode through the in-process MCP server, written to reports/eval_<mode>.json.
+# Needs Qdrant (`make up`); ingests the fixture when it is missing. MODE=dense|sparse|hybrid (default: all three).
+# The agent + RAGAS half runs when NEBIUS_API_KEY is set (LLM=0 turns it off) and is "pending credentials" otherwise.
+eval:
+	@$(RUN) python -m movie_rag.eval run $(if $(MODE),--mode $(MODE),) $(if $(filter 0,$(LLM)),--no-llm,)
+
+# The retrieval half on the fixture, all modes, nothing written; fails below eval.smoke_min_mrr. LLM=1 adds a small
+# agent + RAGAS sample (skipped with a notice when NEBIUS_API_KEY is not set). CI calls exactly these two forms.
+eval-smoke:
+	@$(RUN) python -m movie_rag.eval smoke $(if $(filter 1,$(LLM)),--llm,)
+
+# Render reports/EVAL_RESULTS.md from reports/eval_<mode>.json.
+report:
+	@$(RUN) python -m movie_rag.eval report

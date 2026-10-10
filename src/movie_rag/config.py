@@ -12,6 +12,7 @@ import json
 import os
 from collections.abc import Callable
 from enum import Enum
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
 
@@ -131,6 +132,20 @@ class EvalConfig(_Section):
     generate_count: int = Field(gt=0)  # fuzzy questions one generator run tries to produce
     max_attempts: int = Field(gt=0)  # model calls per film before the film is rejected
     dataset_name: str = Field(min_length=1)  # LangSmith dataset created by `python -m movie_rag.eval.upload`
+    k_values: list[int] = Field(min_length=1)  # Hit@k cut-offs, strictly increasing; the largest is the retrieval depth
+    reports_dir: Path  # eval_<mode>.json and EVAL_RESULTS.md
+    smoke_min_mrr: float = Field(ge=0, le=1)  # floor for `make eval-smoke`
+    smoke_llm_per_type: int = Field(gt=0)  # questions per type in the LLM half of `make eval-smoke LLM=1`
+    ragas_concurrency: int = Field(gt=0)  # RAGAS metric calls in flight at once
+    relevancy_strictness: int = Field(gt=0)  # questions generated per answer for response relevancy
+    judge_timeout_s: float = Field(gt=0)  # HTTP timeout of one judge request
+
+    @field_validator("k_values")
+    @classmethod
+    def _k_values_increase(cls, value: list[int]) -> list[int]:
+        if value[0] < 1 or any(b <= a for a, b in pairwise(value)):
+            raise ValueError("eval.k_values must be positive and strictly increasing")
+        return value
 
     def resolve(self, path: Path, root: Path = PROJECT_ROOT) -> Path:
         """Resolve a configured relative path against the project root."""

@@ -64,3 +64,7 @@ class McpUnavailableError(AgentError):
 
 class EvalSetError(MovieRagError):
     """The evaluation question file is malformed or disagrees with the dataset it is checked against."""
+
+
+class EvalError(MovieRagError):
+    """An evaluation run cannot start or finish for a reason the user can act on (no Qdrant, wrong index, bad setup)."""

@@ -73,3 +73,9 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-08 QA m3/m4/m5] fuzzy-06 keeps title word "window"; fuzzy-10 is keyword-heavy ("reef", "diver", "hull"); filtered-01/-03/-04 are isolated by the filter alone (documented).
 - [PR-08 QA m6] `docs/prs/PR-08.md` names the QA report `pr-08.md`; GitHub mode uses `pr-8.md`.
 - [PR-08] Fixture favours BM25 (rare occupation/setting nouns in a 291-film corpus): PR-09 report must say the fixture cannot show hybrid's advantage; real numbers need the full dataset.
+- [PR-09] ragas 0.4.3 (latest) imports `langchain_community.chat_models.vertexai`, which langchain-community 0.4 removed; `eval/ragas_judge.install_ragas_compat()` registers an inert stand-in before importing ragas. Remove it when ragas drops the import (ragas is pinned `>=0.4.3,<0.5`).
+- [PR-09] The RAGAS half has only run against a fake judge (no key): instructor's default tool-calling mode against `openai/gpt-oss-120b` on Nebius, the cost of 30 samples x 4 metrics x 3 modes, and the agent's citation rate on Qwen3-30B are unverified. Run `make eval` once `NEBIUS_API_KEY` exists and commit the refreshed reports.
+- [PR-09] Qdrant's RRF returns tied fusion scores in varying order (hybrid Hit@1 moved between 0.867 and 0.900 on identical data); the metrics are tie-aware to absorb it, but the retrieval layer itself has no deterministic tie-break (e.g. by dense score then movie_id).
+- [PR-09] `reports/eval_<mode>.json` carry `git_sha` of HEAD at run time and a timestamp, so every re-run changes the committed files; regenerate them only when the code or the question set changes.
+- [PR-09] `make eval-smoke LLM=1` runs the agent over `eval.smoke_llm_per_type` questions per type for all three modes (24 agent calls with the default 2); lower it if the CI key's rate limit is tight.
+- [PR-09] The LLM half of `make eval` is attempted whenever `NEBIUS_API_KEY` is set; there is no `--max-questions` for it beyond `LLM=0`.
