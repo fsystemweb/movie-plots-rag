@@ -91,6 +91,30 @@ Host, port, path and limits live under `mcp:` in `config.yaml` (`MCP__HOST`, `MC
 tool schemas are snapshot-tested (`tests/fixtures/mcp_tools_schema.json`; regenerate with
 `UPDATE_MCP_SNAPSHOT=1 uv run pytest tests/unit/test_mcp_server.py -k snapshot`).
 
+## Agent
+
+```bash
+make ask Q="a film where a hotel telephone operator overhears a murder being planned"
+```
+
+`src/movie_rag/agent/` is a LangChain (`create_agent`) tool-calling agent. Its tools are the four MCP tools, loaded
+through `langchain-mcp-adapters` from `mcp.url` (so `make serve` must be running); the chat model is
+`ChatOpenAI(base_url=llm.base_url, model=llm.chat_model, temperature=0)` on Nebius Token Factory and is created when a
+question is asked, so importing the package or running the tests never needs a key. Without `NEBIUS_API_KEY`,
+`make ask` prints `set NEBIUS_API_KEY — see docs/CREDENTIALS.md` and exits 2.
+
+- At most `llm.max_tool_calls` (4) tool calls per question, enforced with `ToolCallLimitMiddleware`; further calls are
+  refused (the model sees an error) and counted in `Answer.blocked_tool_calls`.
+- The versioned prompt `agent/prompts/system_v1.md` (`agent.prompt_version`) holds the answer rules: only facts from
+  tool results, at most `agent.max_citations` films with one sentence each, cite as `Title (Year)` plus Wikipedia link,
+  say so when nothing fits.
+- Citations are built from the films the tools returned, never from the model's text: the text only selects which
+  retrieved films are mentioned (by exact `Title (Year)` or `movie_id`). An invented film matches nothing and is dropped;
+  an answer that cites no retrieved film is replaced by a standard abstention message (`Answer.abstained`).
+- `Answer` (Pydantic) carries the text, citations, every retrieved film, the tool calls, token usage, latency and the
+  run metadata (git sha, prompt version, chat model, embedding model, retrieval mode, config hash), which is also on
+  the LangSmith spans. Secrets never reach the model or a trace.
+
 ## Make targets
 
 | Target | What it does | Status |
@@ -107,7 +131,7 @@ tool schemas are snapshot-tested (`tests/fixtures/mcp_tools_schema.json`; regene
 | `ingest` | chunk, embed and upsert into Qdrant; downloaded dataset if present, else the fixture (`FIXTURE=1` forces it, `CSV=path`, `RECREATE=1`) | ready |
 | `demo` | `up` + `ingest` on the fixture + the sample query in dense, sparse and hybrid mode (`Q="..."` to ask your own); no credentials | ready |
 | `serve` | MCP server over HTTP at `mcp.url` (`STDIO=1` for stdio, `DOCKER=1` for the compose service with healthcheck) | ready |
-| `ask` | CLI agent | PR-06 |
+| `ask` | CLI agent: `make ask Q="..."` (`MODE=dense\|sparse\|hybrid`, `JSON=1`); needs `make serve` and `NEBIUS_API_KEY` (without it: prints the hint, exits 2) | ready |
 | `ui` | Streamlit page | PR-07 |
 | `eval`, `eval-smoke`, `report` | evaluation harness (`eval-smoke LLM=1` adds RAGAS) | PR-09 |
 
