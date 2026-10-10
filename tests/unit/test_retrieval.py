@@ -13,10 +13,10 @@ from qdrant_client import models as m
 
 from fakes import FakeEmbedder
 from movie_rag.config import RetrievalMode, Settings, load_settings
-from movie_rag.errors import RetrievalError
+from movie_rag.errors import MovieNotFoundError, RetrievalError
 from movie_rag.ingest.clean import MovieRecord, clean_csv
-from movie_rag.ingest.index import DENSE_VECTOR, SPARSE_VECTOR
-from movie_rag.ingest.pipeline import ingest_csv
+from movie_rag.ingest.index import DENSE_VECTOR, SPARSE_VECTOR, ensure_collection
+from movie_rag.ingest.pipeline import ingest_csv, write_records
 from movie_rag.retrieval import (
     MovieDetail,
     Retriever,
@@ -413,3 +413,91 @@ def test_client_and_embedder_are_created_lazily_from_the_settings(
     assert retriever.client is retriever.client and retriever.embedder is retriever.embedder
     qdrant_cls.assert_called_once_with(url=settings.qdrant.url, timeout=settings.qdrant.timeout_s)
     embedder_cls.assert_called_once_with(settings.embeddings)
+
+
+# --- title lookup, similar films, filter values, spans ----------------------------------------------------------
+
+
+def test_find_by_title_matches_exactly_and_returns_the_full_plot(
+    retriever: Retriever, fixture_index: tuple[QdrantClient, Settings, list[MovieRecord]]
+) -> None:
+    _, _, records = fixture_index
+    record = records[4]
+    (film,) = retriever.find_by_title(f" {record.title} ")
+    assert (film.movie_id, film.plot, film.release_year) == (record.movie_id, record.plot, record.release_year)
+    assert retriever.find_by_title(record.title.lower() + " ") == []  # exact, case-sensitive
+    assert retriever.find_by_title("No Such Film") == []
+
+
+def test_find_by_title_can_narrow_by_year_and_orders_remakes_by_year(
+    fixture_index: tuple[QdrantClient, Settings, list[MovieRecord]],
+) -> None:
+    _client, settings, records = fixture_index
+    original = records[4]
+    scratch = QdrantClient(":memory:")
+    settings = settings.model_copy(deep=True)
+    ensure_collection(scratch, settings)
+    remake = original.model_copy(update={"movie_id": "z-remake", "release_year": original.release_year - 20})
+    write_records(scratch, FakeEmbedder(), settings, [original, remake])
+    found = Retriever(settings, client=scratch, embedder=FakeEmbedder())
+    assert [f.movie_id for f in found.find_by_title(original.title)] == ["z-remake", original.movie_id]
+    assert [f.movie_id for f in found.find_by_title(original.title, year=original.release_year)] == [original.movie_id]
+    assert len(found.find_by_title(original.title, limit=1)) == 1
+
+
+def test_find_similar_excludes_the_film_and_unknown_ids_raise(
+    retriever: Retriever, fixture_index: tuple[QdrantClient, Settings, list[MovieRecord]]
+) -> None:
+    _, settings, records = fixture_index
+    hits = retriever.find_similar(records[0].movie_id, top_k=4)
+    assert len(hits) == 4 and records[0].movie_id not in {h.movie_id for h in hits}
+    assert len(retriever.find_similar(records[0].movie_id)) == settings.retrieval.top_k
+    with pytest.raises(MovieNotFoundError, match="no-such-film"):
+        retriever.find_similar("no-such-film")
+    with pytest.raises(RetrievalError, match="top_k"):
+        retriever.find_similar(records[0].movie_id, top_k=0)
+
+
+def test_list_filters_reports_values_by_frequency_and_the_year_range(
+    retriever: Retriever, fixture_index: tuple[QdrantClient, Settings, list[MovieRecord]]
+) -> None:
+    _, _, records = fixture_index
+    options = retriever.list_filters(limit=1000)
+    assert set(options.genres) == {r.genre for r in records if r.genre}
+    assert set(options.origins) == {r.origin for r in records if r.origin}
+    assert (options.year_min, options.year_max) == (
+        min(r.release_year for r in records),
+        max(r.release_year for r in records),
+    )
+    assert options.truncated is False
+    capped = retriever.list_filters(limit=2)
+    assert capped.genres == options.genres[:2] and capped.truncated is True
+
+
+def test_list_filters_on_an_empty_collection_has_no_year_range() -> None:
+    settings = load_settings(env_file=None)
+    empty = QdrantClient(":memory:")
+    ensure_collection(empty, settings)
+    options = Retriever(settings, client=empty, embedder=FakeEmbedder()).list_filters(limit=5)
+    assert (options.genres, options.origins, options.year_min, options.year_max) == ([], [], None, None)
+
+
+def test_search_and_find_similar_open_retriever_spans(
+    retriever: Retriever, fixture_index: tuple[QdrantClient, Settings, list[MovieRecord]]
+) -> None:
+    from fakes import RunCapture
+
+    _, _, records = fixture_index
+    with RunCapture() as capture:
+        retriever.search("a heist", mode="sparse", top_k=2, filters=SearchFilters(genre="Drama", year_to=1990))
+        retriever.find_similar(records[0].movie_id, top_k=2)
+    search_run, similar_run = capture.runs["retriever.search"], capture.runs["retriever.find_similar"]
+    assert search_run["run_type"] == similar_run["run_type"] == "retriever"
+    meta = search_run["extra"]["metadata"]
+    assert (meta["retrieval_mode"], meta["top_k"], meta["filters"]) == (
+        "sparse",
+        2,
+        {"year_to": 1990, "genre": "drama"},
+    )
+    assert search_run["outputs"]["result_count"] <= 2 and search_run["outputs"]["latency_ms"] >= 0
+    assert similar_run["outputs"]["result_count"] == 2 and similar_run["inputs"] == {"movie_id": records[0].movie_id}

@@ -67,6 +67,30 @@ uv run python -m movie_rag.retrieval "a detective loses his memory" --mode hybri
 * **Parameters** (`config.yaml`, `retrieval:`): `default_mode`, `top_k`, `prefetch_limit`, `snippet_max_chars`,
   `demo_query`. The RRF constant is not configurable on Qdrant 1.15 (needs qdrant-client and server 1.16).
 
+## MCP server
+
+```bash
+make serve                  # streamable HTTP on http://127.0.0.1:8000/mcp (needs `make up` + `make ingest` to answer)
+make serve DOCKER=1         # the same as the `mcp-server` compose service on :8000, healthy once /health answers
+make serve STDIO=1          # stdio, for local MCP clients (Claude Desktop, MCP Inspector)
+```
+
+Four read-only tools, no LLM calls inside, built with FastMCP on top of `movie_rag.retrieval`:
+
+| Tool | Arguments | Returns |
+|---|---|---|
+| `search_movies` | `query`, `mode` (hybrid), `top_k`, `year_from`, `year_to`, `genre`, `origin` | ranked films: id, title, year, director, genre, origin, score, snippet, wiki URL |
+| `get_movie` | `movie_id` or exact `title` (+ `year` for remakes) | full metadata and plot |
+| `find_similar` | `movie_id`, `top_k` | closest films by plot vector, never the input film |
+| `list_filters` | none | valid genres and origins (most frequent first) and the year range |
+
+Bad input, unknown films and an unreachable or missing index come back as `ToolError` with a message that says what to
+do; internals are never exposed. Every call is a LangSmith span (`mcp.<tool>` with mode, filters, latency and result
+count, and a nested `retriever.*` span); without `LANGSMITH_API_KEY` tracing is a no-op on the same code path.
+Host, port, path and limits live under `mcp:` in `config.yaml` (`MCP__HOST`, `MCP__PORT`, ... override them). The
+tool schemas are snapshot-tested (`tests/fixtures/mcp_tools_schema.json`; regenerate with
+`UPDATE_MCP_SNAPSHOT=1 uv run pytest tests/unit/test_mcp_server.py -k snapshot`).
+
 ## Make targets
 
 | Target | What it does | Status |
@@ -82,7 +106,7 @@ uv run python -m movie_rag.retrieval "a detective loses his memory" --mode hybri
 | `doctor` | report on Docker, Qdrant, dataset, credentials and model ids with next steps; always exits 0 | ready |
 | `ingest` | chunk, embed and upsert into Qdrant; downloaded dataset if present, else the fixture (`FIXTURE=1` forces it, `CSV=path`, `RECREATE=1`) | ready |
 | `demo` | `up` + `ingest` on the fixture + the sample query in dense, sparse and hybrid mode (`Q="..."` to ask your own); no credentials | ready |
-| `serve` | MCP server | PR-05 |
+| `serve` | MCP server over HTTP at `mcp.url` (`STDIO=1` for stdio, `DOCKER=1` for the compose service with healthcheck) | ready |
 | `ask` | CLI agent | PR-06 |
 | `ui` | Streamlit page | PR-07 |
 | `eval`, `eval-smoke`, `report` | evaluation harness (`eval-smoke LLM=1` adds RAGAS) | PR-09 |

@@ -76,6 +76,16 @@ class LLMConfig(_Section):
 
 class McpConfig(_Section):
     url: str
+    host: str
+    port: int = Field(gt=0, le=65535)
+    path: str = Field(pattern=r"^/")
+    health_path: str = Field(pattern=r"^/")
+    min_query_chars: int = Field(ge=1)
+    max_query_chars: int = Field(ge=1)
+    max_top_k: int = Field(gt=0)
+    max_filter_values: int = Field(gt=0)
+    title_lookup_limit: int = Field(gt=0)
+    healthcheck_timeout_s: float = Field(gt=0)
 
 
 class AgentConfig(_Section):

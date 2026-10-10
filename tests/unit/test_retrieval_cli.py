@@ -133,10 +133,14 @@ def test_an_unreadable_configuration_is_reported_without_a_traceback(
 def test_without_an_injected_client_main_connects_to_the_configured_url(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("QDRANT_URL", "http://127.0.0.1:1")
+    monkeypatch.setenv("QDRANT_URL", "http://qdrant.invalid:6333")
+    unreachable = MagicMock(spec=QdrantClient)
+    unreachable.query_points_groups.side_effect = ResponseHandlingException(ConnectionError("refused"))
+    factory = MagicMock(return_value=unreachable)  # no socket is ever opened
+    monkeypatch.setattr("movie_rag.retrieval.search.QdrantClient", factory)
     assert main(["q", "--mode", "dense"], embedder=FakeEmbedder()) == EXIT_FAILURE
-    err = capsys.readouterr().err
-    assert "cannot search Qdrant at http://127.0.0.1:1" in err
+    assert factory.call_args.kwargs["url"] == "http://qdrant.invalid:6333"
+    assert "cannot search Qdrant at http://qdrant.invalid:6333" in capsys.readouterr().err
 
 
 @pytest.mark.filterwarnings("ignore:'movie_rag.retrieval.__main__' found in sys.modules")

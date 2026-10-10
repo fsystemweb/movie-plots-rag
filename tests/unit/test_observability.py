@@ -195,3 +195,66 @@ def test_traceable_functions_behave_identically_with_tracing_off(make_settings: 
 
     assert ls_utils.tracing_is_enabled() is False
     assert search("heist")[0]["page_content"] == "HEIST"
+
+
+# --- scrub and span --------------------------------------------------------------------------------------------
+
+FAKE_KEY = "sk-" + "abcdefghijklmnop1234"  # built at runtime: not a secret, and not shaped like one in the source
+CONFIGURED_SECRET = "-".join(["configured", "value", "0123456789"])
+
+
+def test_scrub_replaces_secret_shaped_and_configured_secrets_recursively(make_settings: MakeSettings) -> None:
+    s = make_settings(NEBIUS_API_KEY="plain-secret-value")
+    data = {"q": f"use {FAKE_KEY} now", "nested": ["plain-secret-value", ("lsv2_abcdefgh1234", 3)], "n": 4}
+    out = observability.scrub(data, s)
+    assert out == {"q": "use *** now", "nested": ["***", ["***", 3]], "n": 4}
+
+
+def test_span_runs_the_block_identically_with_tracing_off(make_settings: MakeSettings) -> None:
+    with observability.span("work", run_type="tool", settings=make_settings(), inputs={"a": 1}, tool="x") as run:
+        run.set(result_count=2)
+    assert run.outputs["result_count"] == 2
+    assert run.outputs["latency_ms"] >= 0
+
+
+def test_span_loads_settings_when_none_given() -> None:
+    with observability.span("work") as run:
+        run.set(ok=True)
+    assert run.outputs["ok"] is True
+
+
+def test_span_reraises_errors_unchanged(make_settings: MakeSettings) -> None:
+    with pytest.raises(KeyError, match="boom"), observability.span("work", settings=make_settings()):
+        raise KeyError("boom")
+
+
+def test_span_uploads_metadata_inputs_outputs_and_latency_without_secrets(make_settings: MakeSettings) -> None:
+    from fakes import RunCapture
+
+    s = make_settings(LANGSMITH_API_KEY=CONFIGURED_SECRET)
+    with (
+        RunCapture() as capture,
+        observability.span(
+            "outer",
+            run_type="tool",
+            settings=s,
+            inputs={"query": f"find {FAKE_KEY}"},
+            tool="t",
+            genre=FAKE_KEY,
+            retrieval_mode="sparse",
+        ) as outer,
+    ):
+        with observability.span("inner", run_type="retriever", settings=s) as inner:
+            inner.set(result_count=3, note=CONFIGURED_SECRET)
+        outer.set(result_count=1)
+    runs = capture.runs
+    assert runs["outer"]["run_type"] == "tool" and runs["inner"]["run_type"] == "retriever"
+    assert runs["inner"]["parent_run_id"] == runs["outer"]["id"]
+    assert runs["outer"]["inputs"] == {"query": "find ***"}
+    assert runs["outer"]["outputs"]["result_count"] == 1 and "latency_ms" in runs["outer"]["outputs"]
+    assert runs["inner"]["outputs"]["result_count"] == 3
+    assert runs["inner"]["extra"]["metadata"].keys() >= REQUIRED_KEYS
+    outer_meta = runs["outer"]["extra"]["metadata"]
+    assert outer_meta.keys() >= REQUIRED_KEYS and outer_meta["tool"] == "t" and outer_meta["retrieval_mode"] == "sparse"
+    assert outer_meta["genre"] == "***"
+    assert FAKE_KEY not in capture.payloads and CONFIGURED_SECRET not in capture.payloads

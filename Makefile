@@ -77,7 +77,12 @@ demo: up
 	@$(MAKE) --no-print-directory ingest FIXTURE=1
 	@$(RUN) python -m movie_rag.retrieval --mode all $(if $(Q),"$(Q)",)
 
-serve:      ; @echo "not implemented yet (PR-05)"
+# MCP server over streamable HTTP at mcp.url (needs `make up` + `make ingest` to answer queries).
+# DOCKER=1 builds and runs the compose service instead (waits for its healthcheck); STDIO=1 serves over stdio.
+serve:
+	@if [ -n "$(DOCKER)" ]; then docker compose up -d --build --wait mcp-server; \
+	else $(RUN) python -m movie_rag.mcp_server $(if $(STDIO),--transport stdio,); fi
+
 ask:        ; @echo "not implemented yet (PR-06)"
 ui:         ; @echo "not implemented yet (PR-07)"
 eval:       ; @echo "not implemented yet (PR-09)"

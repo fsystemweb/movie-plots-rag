@@ -11,12 +11,16 @@ import logging
 import os
 import re
 import subprocess
+import time
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from functools import lru_cache
 from typing import Any, cast
 
+import langsmith as ls
 from langsmith import utils as ls_utils
 
-from movie_rag.config import PROJECT_ROOT, Settings, load_settings
+from movie_rag.config import PROJECT_ROOT, REDACTED, Settings, load_settings
 
 logger = logging.getLogger(__name__)
 
@@ -116,3 +120,61 @@ def run_metadata(settings: Settings | None = None, **extra: Any) -> dict[str, An
             raise ValueError(f"refusing to put a secret-shaped value in trace metadata field {key!r}")
         metadata[key] = value
     return metadata
+
+
+def scrub(value: Any, settings: Settings) -> Any:
+    """``value`` with configured secrets and API-key-shaped strings replaced by ``***``.
+
+    Strings are scrubbed, lists, tuples and dicts recursively; everything else is returned as is. Applied to every span
+    input and metadata value so a user query that happens to contain a key can never reach a trace.
+    """
+    if isinstance(value, str):
+        return _SECRET_SHAPED_VALUE.sub(REDACTED, settings.redact(value))
+    if isinstance(value, Mapping):
+        return {k: scrub(v, settings) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [scrub(v, settings) for v in value]
+    return value
+
+
+class Span:
+    """Handle yielded by :func:`span`: collect the outputs of the traced operation with :meth:`set`."""
+
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
+        self.outputs: dict[str, Any] = {}
+
+    def set(self, **outputs: Any) -> None:
+        """Record outputs (for example ``result_count``); values are scrubbed before they are traced."""
+        self.outputs.update(scrub(outputs, self._settings))
+
+
+@contextmanager
+def span(
+    name: str,
+    *,
+    run_type: str = "chain",
+    settings: Settings | None = None,
+    inputs: Mapping[str, Any] | None = None,
+    **metadata: Any,
+) -> Iterator[Span]:
+    """A LangSmith span around a block: ``run_metadata`` plus ``metadata`` on the run, ``latency_ms`` in the outputs.
+
+    Without tracing (no key, or ``LANGSMITH_TRACING`` off) the code path is the same and nothing is uploaded.
+    Inputs and metadata values are scrubbed of secrets; an exception inside the block is recorded on the run and
+    re-raised unchanged.
+    """
+    settings = settings or load_settings()
+    handle = Span(settings)
+    started = time.perf_counter()
+    with ls.trace(
+        name,
+        cast(Any, run_type),
+        inputs=scrub(dict(inputs or {}), settings),
+        metadata=run_metadata(settings, **scrub(metadata, settings)),
+    ) as run:
+        try:
+            yield handle
+        finally:
+            handle.outputs["latency_ms"] = round((time.perf_counter() - started) * 1000, 2)
+            run.add_outputs(handle.outputs)

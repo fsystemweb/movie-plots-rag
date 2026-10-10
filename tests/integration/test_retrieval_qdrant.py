@@ -143,3 +143,30 @@ def test_the_filter_is_applied_before_the_candidate_cut_not_after_it(client: Qdr
         assert sorted(h.movie_id for h in hits) == ["weak-0", "weak-1", "weak-2"]
     finally:
         client.delete_collection(settings.qdrant.collection)
+
+
+def test_exact_title_lookup_finds_the_film_and_its_whole_plot(
+    indexed: tuple[Retriever, Settings, list[MovieRecord]],
+) -> None:
+    retriever, _, records = indexed
+    record = records[10]
+    assert [(f.movie_id, f.plot) for f in retriever.find_by_title(record.title)] == [(record.movie_id, record.plot)]
+    assert retriever.find_by_title(record.title, year=record.release_year + 1) == []
+
+
+def test_find_similar_returns_other_films_best_first(indexed: tuple[Retriever, Settings, list[MovieRecord]]) -> None:
+    retriever, _, records = indexed
+    hits = retriever.find_similar(records[0].movie_id, top_k=5)
+    assert len(hits) == 5 and records[0].movie_id not in {h.movie_id for h in hits}
+    assert [h.score for h in hits] == sorted((h.score for h in hits), reverse=True)
+
+
+def test_list_filters_uses_the_indexed_fields(indexed: tuple[Retriever, Settings, list[MovieRecord]]) -> None:
+    retriever, _, records = indexed
+    options = retriever.list_filters(limit=1000)
+    assert set(options.genres) == {r.genre for r in records if r.genre}
+    assert set(options.origins) == {r.origin for r in records if r.origin}
+    assert (options.year_min, options.year_max) == (
+        min(r.release_year for r in records),
+        max(r.release_year for r in records),
+    )

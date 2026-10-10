@@ -1,6 +1,7 @@
 """Hybrid retrieval over the Qdrant collection built by :mod:`movie_rag.ingest` (dense, BM25 sparse, RRF hybrid)."""
 
 from movie_rag.retrieval.search import (
+    FilterOptions,
     MovieDetail,
     MovieHit,
     Retriever,
@@ -11,6 +12,7 @@ from movie_rag.retrieval.search import (
 )
 
 __all__ = [
+    "FilterOptions",
     "MovieDetail",
     "MovieHit",
     "Retriever",
