@@ -14,5 +14,5 @@ Orchestrator memory across restarts. Statuses: `todo · in-progress · merged ·
 | PR-08 | Evaluation set | pr/08-eval-set | merged | [#8](https://github.com/fsystemweb/movie-plots-rag/pull/8) | ✅ | ✅ | 1 | 2026-10-10 11:30 | QA PASS r1, reviewed all 40, 0 rejections (7 minors → backlog); fixture favours BM25 (fuzzy rank-1: bm25 10/10, hybrid 9/10, dense 7/10) |
 | PR-09 | Evaluation runner | pr/09-eval-runner | merged | [#9](https://github.com/fsystemweb/movie-plots-rag/pull/9) | ✅ | ✅ r2 | 1 | 2026-10-10 14:06 | QA FAIL r1 (`make test` red under parent make; suite ~376 s near 540 s gate) → PASS r2 (281 s); smoke-eval green; `eval` label created; builder hit session limit once (resumed) |
 | PR-10 | ADRs and README | pr/10-adrs-readme | merged | [#10](https://github.com/fsystemweb/movie-plots-rag/pull/10) | ✅ | ✅ | 1 | 2026-10-10 14:39 | QA PASS r1 (5 minors → backlog); fresh clone → `make demo` verified by builder and QA; smoke-eval green |
-| PR-11 | Stakeholder overview, credentials guide, demo | pr/11-overview-demo | in-progress | | | | 1 | | |
-| PR-12 | Stretch: reranker | pr/12-reranker | todo | | | | 0 | | |
+| PR-11 | Stakeholder overview, credentials guide, demo | pr/11-overview-demo | merged | [#11](https://github.com/fsystemweb/movie-plots-rag/pull/11) | ✅ | ✅ r2 | 1 | 2026-10-10 15:48 | QA FAIL r1 (eval auto-ingested fixture into the production collection) → fixed in code (`eval.collection`), PASS r2 |
+| PR-12 | Stretch: reranker | pr/12-reranker | skipped | | | | 0 | | Stretch; not started — left for a human decision at handoff |
