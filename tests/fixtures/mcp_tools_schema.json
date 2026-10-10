@@ -1,0 +1,538 @@
+[
+  {
+    "description": "Find films with plots similar to a given film ('more like this'). Needs a movie_id from another tool.\n\nReturns the closest films by plot meaning, most similar first, never including the film itself, in the same\nformat as search_movies. Cite each as 'Title (Year)' plus its wiki_url.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "movie_id": {
+          "description": "The movie_id of the film to start from.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "top_k": {
+          "default": 8,
+          "description": "How many similar films to return.",
+          "maximum": 20,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "movie_id"
+      ],
+      "type": "object"
+    },
+    "name": "find_similar",
+    "outputSchema": {
+      "description": "Films whose plots are closest to a given film.",
+      "properties": {
+        "count": {
+          "description": "Number of films returned.",
+          "type": "integer"
+        },
+        "movie_id": {
+          "description": "The film the search started from (never part of the results).",
+          "type": "string"
+        },
+        "results": {
+          "description": "Most similar films first; cite each with its wiki_url.",
+          "items": {
+            "description": "One film in a result list: its best chunk's score and snippet plus the fields needed for a citation.",
+            "properties": {
+              "chunk_idx": {
+                "type": "integer"
+              },
+              "director": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "genre": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "movie_id": {
+                "type": "string"
+              },
+              "origin": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "release_year": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "score": {
+                "type": "number"
+              },
+              "snippet": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "wiki_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "movie_id",
+              "title",
+              "release_year",
+              "director",
+              "genre",
+              "origin",
+              "wiki_url",
+              "score",
+              "chunk_idx",
+              "snippet"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "movie_id",
+        "count",
+        "results"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "description": "Get one film's full metadata and its complete plot. Use it to verify details of a film already found.\n\nPass exactly one of movie_id or title. A title must match exactly; if several films share it (remakes) the\nerror lists their ids and years: call again with movie_id, or with title and year. Cite the film as\n'Title (Year)' plus its wiki_url.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "movie_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The movie_id returned by search_movies or find_similar (preferred)."
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Exact film title, as written in search results (case-sensitive). Use if no movie_id."
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Release year; only with title, to tell remakes with the same title apart."
+        }
+      },
+      "type": "object"
+    },
+    "name": "get_movie",
+    "outputSchema": {
+      "description": "A film's metadata and its whole plot (stored on chunk 0).",
+      "properties": {
+        "cast": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "director": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "genre": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "movie_id": {
+          "type": "string"
+        },
+        "n_chunks": {
+          "type": "integer"
+        },
+        "origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plot": {
+          "type": "string"
+        },
+        "release_year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "wiki_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "movie_id",
+        "title",
+        "release_year",
+        "director",
+        "cast",
+        "genre",
+        "origin",
+        "wiki_url",
+        "n_chunks",
+        "plot"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "description": "List the values the search filters accept: genres, origins and the release-year range of the collection.\n\nCall it before filtering by genre or origin, which must match exactly (lower case). Genres and origins are\nsorted by how many films have them; truncated is true when the lists were cut.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {},
+      "type": "object"
+    },
+    "name": "list_filters",
+    "outputSchema": {
+      "description": "The values the metadata filters accept: genres and origins (most frequent first) and the year range.",
+      "properties": {
+        "genres": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "origins": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "truncated": {
+          "default": false,
+          "type": "boolean"
+        },
+        "year_max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "year_min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "genres",
+        "origins",
+        "year_min",
+        "year_max"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "description": "Find films whose plot matches a description. Use this first for any 'which movie is it' question.\n\nReturns up to top_k distinct films, best match first, each with movie_id, title, release_year, director, genre,\norigin, score, a snippet of the best matching plot passage (at most a few hundred characters) and wiki_url.\nFacts about a film must come from these results (or get_movie); cite every film as 'Title (Year)' plus its\nwiki_url. An empty result means nothing matched: relax the filters or try another mode instead of guessing.",
+    "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "genre": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only films of exactly this genre (see list_filters for valid values)."
+        },
+        "mode": {
+          "default": "hybrid",
+          "description": "'hybrid' (default, best for most questions), 'dense' (meaning only, for vague descriptions) or 'sparse' (keywords only, for names and exact terms).",
+          "enum": [
+            "dense",
+            "sparse",
+            "hybrid"
+          ],
+          "type": "string"
+        },
+        "origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only films of exactly this origin/ethnicity (see list_filters for valid values)."
+        },
+        "query": {
+          "description": "Natural-language description of the plot, characters or premise of the film to find.",
+          "maxLength": 1000,
+          "minLength": 2,
+          "type": "string"
+        },
+        "top_k": {
+          "default": 8,
+          "description": "How many films to return (best first).",
+          "maximum": 20,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "year_from": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only films released in or after this year."
+        },
+        "year_to": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only films released in or before this year."
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search_movies",
+    "outputSchema": {
+      "description": "Films matching a search, best first, one row per film.",
+      "properties": {
+        "count": {
+          "description": "Number of films returned.",
+          "type": "integer"
+        },
+        "mode": {
+          "description": "Retrieval mode that produced the ranking.",
+          "enum": [
+            "dense",
+            "sparse",
+            "hybrid"
+          ],
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hint when nothing matched (how to relax the search)."
+        },
+        "query": {
+          "description": "The query as searched (whitespace trimmed).",
+          "type": "string"
+        },
+        "results": {
+          "description": "Ranked films; cite each as 'title (release_year)' with its wiki_url.",
+          "items": {
+            "description": "One film in a result list: its best chunk's score and snippet plus the fields needed for a citation.",
+            "properties": {
+              "chunk_idx": {
+                "type": "integer"
+              },
+              "director": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "genre": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "movie_id": {
+                "type": "string"
+              },
+              "origin": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "release_year": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "score": {
+                "type": "number"
+              },
+              "snippet": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "wiki_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "movie_id",
+              "title",
+              "release_year",
+              "director",
+              "genre",
+              "origin",
+              "wiki_url",
+              "score",
+              "chunk_idx",
+              "snippet"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "query",
+        "mode",
+        "count",
+        "results"
+      ],
+      "type": "object"
+    }
+  }
+]

@@ -28,9 +28,10 @@ from qdrant_client import QdrantClient
 from qdrant_client import models as m
 
 from movie_rag.config import RetrievalMode, Settings
-from movie_rag.errors import RetrievalError
+from movie_rag.errors import MovieNotFoundError, RetrievalError
 from movie_rag.ingest.embed import Embedder, FastEmbedder
 from movie_rag.ingest.index import DENSE_VECTOR, SPARSE_VECTOR, point_id
+from movie_rag.observability import span
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,16 @@ class MovieDetail(BaseModel):
     wiki_url: str | None
     n_chunks: int
     plot: str
+
+
+class FilterOptions(BaseModel):
+    """The values the metadata filters accept: genres and origins (most frequent first) and the year range."""
+
+    genres: list[str]
+    origins: list[str]
+    year_min: int | None
+    year_max: int | None
+    truncated: bool = False
 
 
 def build_filter(filters: SearchFilters | None) -> m.Filter | None:
@@ -193,42 +204,117 @@ class Retriever:
         mode = mode or cfg.default_mode
         top_k = cfg.top_k if top_k is None else top_k
         query = query.strip()
-        if mode not in MODES:
-            raise RetrievalError(f"unknown mode {mode!r}; use one of {', '.join(MODES)}")
-        if not query:
-            raise RetrievalError("the query is empty")
-        if top_k < 1:
-            raise RetrievalError(f"top_k must be at least 1, got {top_k}")
-        request = build_request(
-            self._settings,
-            mode=mode,
+        with span(
+            "retriever.search",
+            run_type="retriever",
+            settings=self._settings,
+            inputs={"query": query},
+            retrieval_mode=mode,
             top_k=top_k,
-            query_filter=build_filter(filters),
-            dense=self.embedder.embed_dense_query(query) if mode != "sparse" else None,
-            sparse=self.embedder.embed_sparse_query(query) if mode != "dense" else None,
-        )
-        result = self.client.query_points_groups(**request)
-        hits = [self._to_hit(group.hits[0]) for group in result.groups if group.hits]
+            filters=filters.model_dump(exclude_none=True) if filters else {},
+        ) as run:
+            if mode not in MODES:
+                raise RetrievalError(f"unknown mode {mode!r}; use one of {', '.join(MODES)}")
+            if not query:
+                raise RetrievalError("the query is empty")
+            if top_k < 1:
+                raise RetrievalError(f"top_k must be at least 1, got {top_k}")
+            request = build_request(
+                self._settings,
+                mode=mode,
+                top_k=top_k,
+                query_filter=build_filter(filters),
+                dense=self.embedder.embed_dense_query(query) if mode != "sparse" else None,
+                sparse=self.embedder.embed_sparse_query(query) if mode != "dense" else None,
+            )
+            result = self.client.query_points_groups(**request)
+            hits = [self._to_hit(group.hits[0]) for group in result.groups if group.hits]
+            run.set(result_count=len(hits), movie_ids=[h.movie_id for h in hits])
         logger.info("search mode=%s top_k=%d filters=%s -> %d films", mode, top_k, filters, len(hits))
         return hits
 
     def get_movie(self, movie_id: str) -> MovieDetail | None:
         """The film's metadata and full plot, read from chunk 0 by id (no scroll, no filter). ``None`` if unknown."""
         points = self.client.retrieve(self._settings.qdrant.collection, ids=[point_id(movie_id, 0)], with_payload=True)
-        if not points:
-            return None
-        p = dict(points[0].payload or {})
-        return MovieDetail(
-            movie_id=p["movie_id"],
-            title=p["title"],
-            release_year=p.get("release_year"),
-            director=p.get("director"),
-            cast=p.get("cast"),
-            genre=p.get("genre"),
-            origin=p.get("origin"),
-            wiki_url=p.get("wiki_page"),
-            n_chunks=p["n_chunks"],
-            plot=p["full_plot"],
+        return _to_detail(points[0]) if points else None
+
+    def find_by_title(self, title: str, *, year: int | None = None, limit: int = 10) -> list[MovieDetail]:
+        """Films whose title equals ``title`` exactly (case-sensitive), optionally of release ``year``.
+
+        Reads chunk 0 of each match with one filtered ``scroll`` (``title`` has no payload index, so Qdrant checks the
+        payload; fine for chunk-0-only matches). Titles are not unique (remakes): up to ``limit`` films are returned,
+        ordered by year then id so the answer is stable.
+        """
+        must: list[m.Condition] = [
+            m.FieldCondition(key="title", match=m.MatchValue(value=title.strip())),
+            m.FieldCondition(key="chunk_idx", match=m.MatchValue(value=0)),
+        ]
+        if year is not None:
+            must.append(m.FieldCondition(key="release_year", match=m.MatchValue(value=year)))
+        points, _ = self.client.scroll(
+            self._settings.qdrant.collection, scroll_filter=m.Filter(must=must), limit=limit, with_payload=True
+        )
+        films = [_to_detail(p) for p in points]
+        return sorted(films, key=lambda f: (f.release_year is None, f.release_year or 0, f.movie_id))
+
+    def find_similar(self, movie_id: str, *, top_k: int | None = None) -> list[MovieHit]:
+        """The ``top_k`` films closest to ``movie_id`` by dense plot vector, never including ``movie_id`` itself.
+
+        The query is the film's chunk 0 point (Qdrant looks its dense vector up by id), grouped by film like a search.
+        Raises :class:`MovieNotFoundError` for an unknown id.
+        """
+        top_k = self._settings.retrieval.top_k if top_k is None else top_k
+        with span(
+            "retriever.find_similar",
+            run_type="retriever",
+            settings=self._settings,
+            inputs={"movie_id": movie_id},
+            retrieval_mode="dense",
+            top_k=top_k,
+        ) as run:
+            if top_k < 1:
+                raise RetrievalError(f"top_k must be at least 1, got {top_k}")
+            anchor = point_id(movie_id, 0)
+            if not self.client.retrieve(self._settings.qdrant.collection, ids=[anchor], with_payload=False):
+                raise MovieNotFoundError(f"no film with movie_id {movie_id!r}")
+            result = self.client.query_points_groups(
+                self._settings.qdrant.collection,
+                query=anchor,
+                using=DENSE_VECTOR,
+                query_filter=m.Filter(must_not=[m.FieldCondition(key="movie_id", match=m.MatchValue(value=movie_id))]),
+                group_by="movie_id",
+                group_size=1,
+                limit=top_k,
+                with_payload=True,
+            )
+            hits = [self._to_hit(group.hits[0]) for group in result.groups if group.hits]
+            run.set(result_count=len(hits), movie_ids=[h.movie_id for h in hits])
+        return hits
+
+    def list_filters(self, *, limit: int) -> FilterOptions:
+        """Genres and origins (at most ``limit`` each, most frequent first) and the release-year range.
+
+        Uses Qdrant's facet counts on the indexed ``genre`` and ``origin`` fields and ``order_by`` on the indexed
+        ``release_year``, so nothing is scanned client-side.
+        """
+        collection = self._settings.qdrant.collection
+        genres = [str(h.value) for h in self.client.facet(collection, key="genre", limit=limit).hits]
+        origins = [str(h.value) for h in self.client.facet(collection, key="origin", limit=limit).hits]
+        bounds: dict[str, int | None] = {}
+        for label, direction in (("year_min", m.Direction.ASC), ("year_max", m.Direction.DESC)):
+            points, _ = self.client.scroll(
+                collection,
+                limit=1,
+                order_by=m.OrderBy(key="release_year", direction=direction),
+                with_payload=["release_year"],
+            )
+            bounds[label] = points[0].payload["release_year"] if points and points[0].payload else None
+        return FilterOptions(
+            genres=genres,
+            origins=origins,
+            year_min=bounds["year_min"],
+            year_max=bounds["year_max"],
+            truncated=limit in (len(genres), len(origins)),
         )
 
     def _to_hit(self, point: m.ScoredPoint) -> MovieHit:
@@ -245,3 +331,19 @@ class Retriever:
             chunk_idx=p["chunk_idx"],
             snippet=snippet_of(p["text"], self._settings.retrieval.snippet_max_chars),
         )
+
+
+def _to_detail(point: m.Record) -> MovieDetail:
+    p = dict(point.payload or {})
+    return MovieDetail(
+        movie_id=p["movie_id"],
+        title=p["title"],
+        release_year=p.get("release_year"),
+        director=p.get("director"),
+        cast=p.get("cast"),
+        genre=p.get("genre"),
+        origin=p.get("origin"),
+        wiki_url=p.get("wiki_page"),
+        n_chunks=p["n_chunks"],
+        plot=p["full_plot"],
+    )

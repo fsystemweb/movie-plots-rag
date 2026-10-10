@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastembed>=0.7",
+    "fastmcp>=2.12,<4",
     "httpx>=0.28.1",
     "langsmith>=0.14.7",
     "pydantic>=2.14.0",
@@ -67,7 +68,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "live: calls a real external API (needs credentials); deselected in CI via -m 'not live'",
-    "integration: needs the Qdrant service (QDRANT_URL / docker compose up -d qdrant)",
+    "integration: needs the Qdrant service (QDRANT_URL / docker compose up -d qdrant) or a loopback socket",
 ]
 
 [tool.coverage.run]

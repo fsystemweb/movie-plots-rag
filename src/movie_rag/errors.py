@@ -41,3 +41,7 @@ class IndexingError(MovieRagError):
 
 class RetrievalError(MovieRagError):
     """A search request is invalid (empty query, bad ``top_k``, unknown mode)."""
+
+
+class MovieNotFoundError(MovieRagError):
+    """No film matches the given id or title."""

@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from collections import Counter
 from collections.abc import Sequence
+from typing import Any
+from unittest.mock import MagicMock
 
+from langsmith import Client
+from langsmith.run_helpers import tracing_context
 from qdrant_client import models as m
 
 SPARSE_SPACE = 1 << 20
@@ -59,3 +64,42 @@ class FakeEmbedder:
     @property
     def embedded_texts(self) -> list[str]:
         return [t for batch in self.dense_batches for t in batch]
+
+
+class RunCapture:
+    """LangSmith runs recorded from the HTTP requests of a client whose session is a mock (nothing leaves the process).
+
+    Use as ``with RunCapture() as capture:`` around code that opens spans; ``capture.runs`` then maps run name to the
+    merged POST/PATCH payloads (inputs, outputs, metadata, parent).
+    """
+
+    def __init__(self) -> None:
+        self.session = MagicMock()
+        self.client = Client(
+            api_key="test-key", api_url="http://localhost:9", session=self.session, auto_batch_tracing=False
+        )
+        self._context = tracing_context(enabled=True, client=self.client)
+
+    def __enter__(self) -> RunCapture:
+        self._context.__enter__()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._context.__exit__(None, None, None)
+
+    @property
+    def runs(self) -> dict[str, dict[str, Any]]:
+        merged: dict[str, dict[str, Any]] = {}
+        for call in self.session.request.call_args_list:
+            body = call.kwargs.get("data")
+            if not body:
+                continue
+            payload = json.loads(body)
+            run = merged.setdefault(payload["id"], {})
+            run.update({k: v for k, v in payload.items() if v is not None})
+        return {run["name"]: run for run in merged.values() if "name" in run}
+
+    @property
+    def payloads(self) -> str:
+        """Everything that would have been uploaded, as one string (for secret scans)."""
+        return " ".join(str(call.kwargs.get("data")) for call in self.session.request.call_args_list)

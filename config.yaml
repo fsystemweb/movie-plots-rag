@@ -35,7 +35,17 @@ llm:
   max_tool_calls: 4
 
 mcp:
-  url: http://localhost:8000/mcp
+  url: http://localhost:8000/mcp   # where clients (agent, UI) reach the server; keep host/port/path below consistent
+  host: 127.0.0.1                  # bind address; the Docker service overrides it with MCP__HOST=0.0.0.0
+  port: 8000
+  path: /mcp                       # streamable-HTTP endpoint
+  health_path: /health             # liveness probe for the Docker healthcheck
+  min_query_chars: 2
+  max_query_chars: 1000
+  max_top_k: 20                    # upper bound of the top_k argument of search_movies / find_similar
+  max_filter_values: 200           # list_filters returns at most this many genres / origins (most frequent first)
+  title_lookup_limit: 10           # films returned when an exact title is ambiguous
+  healthcheck_timeout_s: 3
 
 agent:
   prompt_version: system_v1
