@@ -101,7 +101,8 @@ def test_no_metric_is_typed_by_hand_outside_the_generated_blocks() -> None:
         text = text.split(begin)[0] + text.split(end)[1]
     assert not re.findall(r"(?<![\d.])[01]\.\d{2,3}(?![\d.])", text), "a two or three decimal figure outside a block"
     assert not re.findall(r"(?:Hit@\d+|MRR)\s*(?:is|=|:)?\s*[01]\.\d", text)
-    assert not re.findall(r"\d+(?:\.\d+)?\s*%\s+(?:of|accuracy|faithful)", text.replace("80% test coverage", ""))
+    assert not re.findall(r"\d+(?:\.\d+)?\s*%\s+(?:of|accuracy|faithful|top)", text.replace("80% test coverage", ""))
+    assert not re.findall(r"\b\d+ of \d+ (?:films|questions)", text.replace("30 of the 40", ""))
 
 
 def test_the_overview_has_at_most_1500_words() -> None:

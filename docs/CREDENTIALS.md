@@ -128,8 +128,8 @@ make download && make ingest && make eval MODE=dense && make eval MODE=sparse &&
 | Step | What it does |
 |---|---|
 | `make download` | fetches `wiki_movie_plots_deduped.csv` into `data/raw/` (gitignored; `FORCE=1` downloads again) |
-| `make ingest` | chunks, embeds (locally, on CPU: untimed for 35k films) and upserts the downloaded dataset; use `RECREATE=1` to drop the fixture films a previous `make demo` indexed |
-| `make eval MODE=...` | per mode: Hit@k, MRR and latency, then the agent and RAGAS half (needs `NEBIUS_API_KEY`); writes `reports/eval_<mode>.json`; `LLM=0` skips the LLM half |
+| `make ingest` | chunks, embeds (locally, on CPU: untimed for 35k films) and upserts the downloaded dataset into the main collection (`qdrant.collection`); `RECREATE=1` drops the fixture films a previous `make demo` put there, so the real index holds real films only |
+| `make eval MODE=...` | per mode: Hit@k, MRR and latency, then the agent and RAGAS half (needs `NEBIUS_API_KEY`); writes `reports/eval_<mode>.json`; `LLM=0` skips the LLM half. It indexes and searches its own collection `eval.collection` (`movie_plots_eval`), not the main one |
 | `make report` | renders `reports/EVAL_RESULTS.md`, the Results block of `README.md` and the two result blocks of `docs/SOLUTION_OVERVIEW.md` from those JSON files |
 
 Then commit `reports/eval_*.json`, `reports/EVAL_RESULTS.md`, `README.md` and `docs/SOLUTION_OVERVIEW.md` **together**:
@@ -142,13 +142,19 @@ disagree. Hand-written prose is never touched by `make report`; re-read it after
   `reports/EVAL_RESULTS.md` and Nebius's price list for the two models, then replace the sentence with the figure.
   The build totals in section 7 are "as of change 10": regenerate them from `docs/TOKEN_USAGE.md`.
 
-**What the sequence measures.** The 40 questions and their gold film ids belong to the synthetic fixture. `make eval`
-indexes the fixture's films into the collection when they are missing, so after `make ingest` of the real dataset the
-run measures fixture films found among the real ones, not real-film accuracy. The "Synthetic fixture" captions and
-chunk count in the generated blocks then describe a much larger index. For a real-data question set run
-`python -m movie_rag.eval.generate` (needs `NEBIUS_API_KEY`), review the output and point `eval.questions_path` at it
-(`docs/EVAL_SET.md`). To keep a clean fixture-only run instead, skip `make download` and run
-`make ingest FIXTURE=1 RECREATE=1`.
+**What the sequence measures, and what it leaves alone.** The 40 questions and their gold film ids belong to the
+synthetic fixture, so the evaluation runs on the fixture, in a collection of its own (`eval.collection`, default
+`movie_plots_eval`, override with `EVAL__COLLECTION`). The first `make eval` fills that collection with the 304 fixture
+passages; later runs reuse it. The main collection that `make ingest` fills, and that `make ask`, the page and
+`make serve` read, is never written by an evaluation (`make eval-smoke` and `make ci` included). The generated captions
+say what was indexed (collection and passage count). The committed overview and README numbers are therefore
+**fixture numbers**, whatever the real index holds. Earlier versions of the evaluator added the fixture films to the main
+collection; that behaviour is gone. If your main collection already holds them, `make ingest RECREATE=1` rebuilds it
+from the downloaded dataset. The evaluator also refuses (clear error, nothing written) to add the fixture to a
+non-empty collection that holds other films.
+
+For real-data numbers a real-data question set is needed (backlog): run `python -m movie_rag.eval.generate` (needs
+`NEBIUS_API_KEY`), review the output and point `eval.questions_path` at it (`docs/EVAL_SET.md`).
 
 Optional extras once the keys exist:
 

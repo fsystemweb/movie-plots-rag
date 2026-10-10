@@ -148,14 +148,17 @@ def test_report_rewrites_the_two_overview_blocks_and_nothing_else(
     assert "result blocks of" in capsys.readouterr().err
 
 
-def test_report_fails_clearly_when_the_overview_has_no_blocks(
+def test_report_fails_clearly_and_writes_nothing_when_the_overview_has_no_blocks(
     reports_dir: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     for report in cached_reports():
         write_report(report, reports_dir)
+    readme_before = (reports_dir.parent / "README.md").read_text()
     (reports_dir.parent / "SOLUTION_OVERVIEW.md").write_text("# no markers here\n")
     assert main(["report"]) == 1
     assert "exactly one results block" in capsys.readouterr().err
+    assert (reports_dir.parent / "README.md").read_text() == readme_before  # no partial update
+    assert not (reports_dir / RESULTS_NAME).exists()
 
 
 def test_report_fails_clearly_when_the_readme_has_no_results_block(

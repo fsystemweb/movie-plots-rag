@@ -6,13 +6,16 @@ qdrant-client's in-memory engine cannot do hybrid search (see tests/unit/test_re
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
 
+from eval_support import real_looking_csv
 from fakes import FakeEmbedder
 from movie_rag.config import RetrievalMode, Settings, load_settings
 from movie_rag.errors import EvalError, RetrievalError
@@ -21,10 +24,12 @@ from movie_rag.eval.retrieval_eval import (
     build_eval_server,
     connect,
     ensure_fixture_indexed,
+    for_eval,
     run_retrieval,
     search_arguments,
 )
 from movie_rag.ingest.clean import MovieRecord
+from movie_rag.ingest.pipeline import ingest_csv
 from movie_rag.mcp_server import build_server
 
 pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
@@ -89,7 +94,9 @@ def test_the_fixture_is_ingested_when_gold_films_are_missing_and_left_alone_othe
     client = QdrantClient(":memory:")
     first = ensure_fixture_indexed(settings, client, questions, embedder=FakeEmbedder())
     assert first.fixture_ingested_now is True
-    assert first.points == client.count(settings.qdrant.collection, exact=True).count > 0
+    assert first.collection == settings.eval.collection != settings.qdrant.collection
+    assert first.points == client.count(settings.eval.collection, exact=True).count > 0
+    assert first.other_points == 0
 
     embedder = FakeEmbedder()
     second = ensure_fixture_indexed(settings, client, questions, embedder=embedder)
@@ -104,6 +111,65 @@ def test_gold_films_that_the_fixture_cannot_provide_are_an_error(
     foreign = questions[0].model_copy(update={"gold_movie_ids": ["not-in-the-fixture-1999-0"]})
     with pytest.raises(EvalError, match="still missing after ingesting the fixture"):
         ensure_fixture_indexed(settings, QdrantClient(":memory:"), [foreign], embedder=FakeEmbedder())
+
+
+# --- the evaluation never writes into the main collection ------------------------------------------------------------
+
+
+def test_for_eval_points_a_copy_at_the_evaluation_collection(settings: Settings) -> None:
+    copy = for_eval(settings)
+    assert copy.qdrant.collection == settings.eval.collection != settings.qdrant.collection
+    assert settings.qdrant.collection == "movie_plots"  # the original is untouched
+
+
+def test_the_fixture_goes_to_the_eval_collection_and_the_main_collection_is_left_alone(
+    settings: Settings, questions: list[EvalQuestion], tmp_path: Path
+) -> None:
+    client = QdrantClient(":memory:")
+    main = settings.qdrant.collection
+    ingest_csv(settings, real_looking_csv(tmp_path), client=client, embedder=FakeEmbedder())
+    before = client.count(main, exact=True).count
+    before_ids = {str(p.id) for p in client.scroll(main, limit=100, with_payload=False)[0]}
+
+    info = ensure_fixture_indexed(settings, client, questions, embedder=FakeEmbedder())
+
+    assert info.fixture_ingested_now is True and info.collection == settings.eval.collection
+    assert client.count(main, exact=True).count == before > 0
+    assert {str(p.id) for p in client.scroll(main, limit=100, with_payload=False)[0]} == before_ids
+    assert client.count(settings.eval.collection, exact=True).count == info.points > before
+
+
+def test_the_eval_server_searches_the_eval_collection_not_the_main_one(
+    settings: Settings, questions: list[EvalQuestion], tmp_path: Path
+) -> None:
+    client = QdrantClient(":memory:")
+    ingest_csv(settings, real_looking_csv(tmp_path), client=client, embedder=FakeEmbedder())
+    ensure_fixture_indexed(settings, client, questions, embedder=FakeEmbedder())
+    server = build_eval_server(settings, client, FakeEmbedder())
+    found = asyncio.run(run_retrieval(server, questions[:3], "dense", 8))
+    assert all(f.ranked_movie_ids and not any(m.startswith("real-film") for m in f.ranked_movie_ids) for f in found)
+
+
+def test_a_non_empty_collection_with_other_films_is_never_filled_with_the_fixture(
+    make_settings: Callable[..., Settings], questions: list[EvalQuestion], tmp_path: Path
+) -> None:
+    settings = make_settings(EVAL__COLLECTION="movie_plots")  # pointed at the real index by mistake
+    client = QdrantClient(":memory:")
+    ingest_csv(settings, real_looking_csv(tmp_path), client=client, embedder=FakeEmbedder())
+    with pytest.raises(EvalError, match=r"holds 2 points that are not fixture films.*EVAL__COLLECTION"):
+        ensure_fixture_indexed(settings, client, questions, embedder=FakeEmbedder())
+    assert client.count("movie_plots", exact=True).count == 2  # nothing was written
+
+
+def test_other_films_next_to_a_complete_fixture_are_reported_not_refused(
+    make_settings: Callable[..., Settings], questions: list[EvalQuestion], tmp_path: Path
+) -> None:
+    settings = make_settings(EVAL__COLLECTION="movie_plots")
+    client = QdrantClient(":memory:")
+    ingest_csv(settings, settings.data.resolve(settings.data.fixture_path), client=client, embedder=FakeEmbedder())
+    ingest_csv(settings, real_looking_csv(tmp_path), client=client, embedder=FakeEmbedder())
+    info = ensure_fixture_indexed(settings, client, questions, embedder=FakeEmbedder())
+    assert info.fixture_ingested_now is False and info.other_points == 2
 
 
 # --- running the questions -----------------------------------------------------------------------------------------

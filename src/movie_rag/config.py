@@ -124,6 +124,7 @@ class DataConfig(_Section):
 
 
 class EvalConfig(_Section):
+    collection: str = Field(min_length=1)  # evaluation's own Qdrant collection: it never touches `qdrant.collection`
     questions_path: Path  # the committed, hand-written and QA-reviewed evaluation set
     generated_path: Path  # where `python -m movie_rag.eval.generate` writes (never the committed set)
     per_type: int = Field(gt=0)  # questions per type in the committed set (4 types)

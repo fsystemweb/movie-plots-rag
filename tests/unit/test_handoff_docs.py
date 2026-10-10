@@ -61,8 +61,14 @@ def test_the_credentials_guide_gives_the_exact_full_results_sequence() -> None:
 def test_the_credentials_guide_quotes_the_configured_models_and_endpoint() -> None:
     settings = load_settings(env_file=None)
     text = CREDENTIALS.read_text(encoding="utf-8")
-    for configured in (settings.llm.chat_model, settings.llm.judge_model, settings.llm.base_url):
+    for configured in (
+        settings.llm.chat_model,
+        settings.llm.judge_model,
+        settings.llm.base_url,
+        settings.eval.collection,
+    ):
         assert configured in text
+    assert settings.eval.collection != settings.qdrant.collection
 
 
 def test_every_make_target_in_the_handoff_docs_exists() -> None:

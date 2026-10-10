@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "mode": "hybrid",
-  "generated_at": "2026-10-10T13:41:17+00:00",
-  "git_sha": "6ffa441",
-  "config_hash": "7fc61e900353",
+  "generated_at": "2026-10-10T15:18:46+00:00",
+  "git_sha": "5410cf4",
+  "config_hash": "4a14f329ad96",
   "embedding_model": "BAAI/bge-small-en-v1.5",
   "sparse_model": "Qdrant/bm25",
   "question_set": {
@@ -17,9 +17,10 @@
     }
   },
   "index": {
-    "collection": "movie_plots",
+    "collection": "movie_plots_eval",
     "points": 304,
-    "fixture_ingested_now": false
+    "fixture_ingested_now": false,
+    "other_points": 0
   },
   "retrieval": {
     "k_values": [
@@ -73,9 +74,9 @@
     },
     "latency_ms": {
       "n": 40,
-      "p50": 34.165000000000006,
-      "p95": 69.4255,
-      "mean": 40.8975
+      "p50": 40.265,
+      "p95": 62.23299999999998,
+      "mean": 45.6105
     },
     "per_question": [
       {
@@ -106,7 +107,7 @@
           0.2
         ],
         "rank": 2,
-        "latency_ms": 77.41
+        "latency_ms": 47.14
       },
       {
         "question_id": "fuzzy-02",
@@ -117,26 +118,26 @@
         ],
         "ranked_movie_ids": [
           "the-forgetting-hour-1947-282",
-          "the-coat-with-the-pistol-1955-106",
           "the-permanent-passenger-1967-222",
-          "the-woman-s-shadow-1967-169",
           "atlas-of-lost-birthdays-2015-248",
-          "rails-beneath-the-snow-1963-277",
           "salvage-rights-1981-22",
-          "the-unexplained-figure-in-the-photographs-1954-255"
+          "monsoon-heist-2005-280",
+          "the-wedding-dress-1958-109",
+          "the-robber-s-portrait-1998-243",
+          "the-woman-s-shadow-1967-169"
         ],
         "scores": [
           0.6666667,
           0.5,
-          0.5,
-          0.5,
           0.33333334,
           0.33333334,
-          0.33333334,
-          0.33333334
+          0.25,
+          0.25,
+          0.24358976,
+          0.2
         ],
         "rank": 1,
-        "latency_ms": 71.24
+        "latency_ms": 57.85
       },
       {
         "question_id": "fuzzy-03",
@@ -166,7 +167,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 66.08
+        "latency_ms": 56.91
       },
       {
         "question_id": "fuzzy-04",
@@ -196,7 +197,7 @@
           0.1936937
         ],
         "rank": 1,
-        "latency_ms": 66.48
+        "latency_ms": 60.52
       },
       {
         "question_id": "fuzzy-05",
@@ -226,7 +227,7 @@
           0.16666667
         ],
         "rank": 1,
-        "latency_ms": 34.2
+        "latency_ms": 58.08
       },
       {
         "question_id": "fuzzy-06",
@@ -256,7 +257,7 @@
           0.1883117
         ],
         "rank": 1,
-        "latency_ms": 59.24
+        "latency_ms": 67.42
       },
       {
         "question_id": "fuzzy-07",
@@ -286,7 +287,7 @@
           0.16849817
         ],
         "rank": 1,
-        "latency_ms": 33.74
+        "latency_ms": 31.42
       },
       {
         "question_id": "fuzzy-08",
@@ -316,7 +317,7 @@
           0.25
         ],
         "rank": 1,
-        "latency_ms": 64.5
+        "latency_ms": 45.77
       },
       {
         "question_id": "fuzzy-09",
@@ -346,7 +347,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 69.33
+        "latency_ms": 80.93
       },
       {
         "question_id": "fuzzy-10",
@@ -376,7 +377,7 @@
           0.32692307
         ],
         "rank": 1,
-        "latency_ms": 37.87
+        "latency_ms": 58.53
       },
       {
         "question_id": "exact-01",
@@ -393,7 +394,7 @@
           "the-cigarette-tray-messages-1961-65",
           "the-landslide-week-1965-195",
           "the-kinder-translation-1921-153",
-          "the-replacement-flowerpot-1922-158"
+          "the-thirteenth-chime-1996-116"
         ],
         "scores": [
           0.8333334,
@@ -406,7 +407,7 @@
           0.25
         ],
         "rank": 1,
-        "latency_ms": 29.58
+        "latency_ms": 29.81
       },
       {
         "question_id": "exact-02",
@@ -436,7 +437,7 @@
           0.2
         ],
         "rank": 1,
-        "latency_ms": 30.52
+        "latency_ms": 35.51
       },
       {
         "question_id": "exact-03",
@@ -466,7 +467,7 @@
           0.2909091
         ],
         "rank": 1,
-        "latency_ms": 31.78
+        "latency_ms": 39.49
       },
       {
         "question_id": "exact-04",
@@ -496,7 +497,7 @@
           0.19166666
         ],
         "rank": 1,
-        "latency_ms": 30.51
+        "latency_ms": 37.31
       },
       {
         "question_id": "exact-05",
@@ -512,8 +513,8 @@
           "the-unbroadcast-script-2014-278",
           "the-rearranged-diary-2013-264",
           "the-reservoir-stone-1951-168",
-          "the-concert-ticket-2000-224",
-          "the-ninth-bell-of-varnholt-1931-14"
+          "stage-fright-at-the-alhambra-1934-175",
+          "the-concert-ticket-2000-224"
         ],
         "scores": [
           1.0,
@@ -526,7 +527,7 @@
           0.25
         ],
         "rank": 1,
-        "latency_ms": 31.67
+        "latency_ms": 38.39
       },
       {
         "question_id": "exact-06",
@@ -556,7 +557,7 @@
           0.21978024
         ],
         "rank": 1,
-        "latency_ms": 31.47
+        "latency_ms": 38.33
       },
       {
         "question_id": "exact-07",
@@ -586,7 +587,7 @@
           0.29166666
         ],
         "rank": 1,
-        "latency_ms": 33.32
+        "latency_ms": 39.99
       },
       {
         "question_id": "exact-08",
@@ -616,7 +617,7 @@
           0.2
         ],
         "rank": 2,
-        "latency_ms": 31.84
+        "latency_ms": 39.52
       },
       {
         "question_id": "exact-09",
@@ -646,7 +647,7 @@
           0.20512821
         ],
         "rank": 2,
-        "latency_ms": 32.41
+        "latency_ms": 39.76
       },
       {
         "question_id": "exact-10",
@@ -676,7 +677,7 @@
           0.21428572
         ],
         "rank": 2,
-        "latency_ms": 34.13
+        "latency_ms": 58.98
       },
       {
         "question_id": "filtered-01",
@@ -692,7 +693,7 @@
           1.0
         ],
         "rank": 1,
-        "latency_ms": 33.41
+        "latency_ms": 36.47
       },
       {
         "question_id": "filtered-02",
@@ -716,7 +717,7 @@
           0.16666667
         ],
         "rank": 1,
-        "latency_ms": 36.45
+        "latency_ms": 61.96
       },
       {
         "question_id": "filtered-03",
@@ -732,7 +733,7 @@
           1.0
         ],
         "rank": 1,
-        "latency_ms": 33.78
+        "latency_ms": 54.8
       },
       {
         "question_id": "filtered-04",
@@ -748,7 +749,7 @@
           1.0
         ],
         "rank": 1,
-        "latency_ms": 41.55
+        "latency_ms": 31.38
       },
       {
         "question_id": "filtered-05",
@@ -768,7 +769,7 @@
           0.5833334
         ],
         "rank": 1,
-        "latency_ms": 38.15
+        "latency_ms": 39.13
       },
       {
         "question_id": "filtered-06",
@@ -786,7 +787,7 @@
           0.6666667
         ],
         "rank": 1,
-        "latency_ms": 35.75
+        "latency_ms": 40.62
       },
       {
         "question_id": "filtered-07",
@@ -804,7 +805,7 @@
           0.6666667
         ],
         "rank": 1,
-        "latency_ms": 43.71
+        "latency_ms": 35.95
       },
       {
         "question_id": "filtered-08",
@@ -822,7 +823,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 38.21
+        "latency_ms": 41.71
       },
       {
         "question_id": "filtered-09",
@@ -840,7 +841,7 @@
           0.33333334
         ],
         "rank": 1,
-        "latency_ms": 57.34
+        "latency_ms": 35.73
       },
       {
         "question_id": "filtered-10",
@@ -866,7 +867,7 @@
           0.14285715
         ],
         "rank": 1,
-        "latency_ms": 38.92
+        "latency_ms": 56.3
       },
       {
         "question_id": "unanswerable-01",
@@ -881,7 +882,7 @@
           "the-gridded-martian-rain-2015-265",
           "the-church-basement-kitchen-2005-2",
           "the-recycled-water-signal-1993-8",
-          "the-bakery-on-quill-street-2006-76"
+          "the-aliens-questions-1984-34"
         ],
         "scores": [
           0.7,
@@ -894,7 +895,7 @@
           0.25
         ],
         "rank": null,
-        "latency_ms": 31.38
+        "latency_ms": 58.7
       },
       {
         "question_id": "unanswerable-02",
@@ -922,7 +923,7 @@
           0.16666667
         ],
         "rank": null,
-        "latency_ms": 42.01
+        "latency_ms": 56.08
       },
       {
         "question_id": "unanswerable-03",
@@ -950,7 +951,7 @@
           0.2
         ],
         "rank": null,
-        "latency_ms": 38.62
+        "latency_ms": 53.2
       },
       {
         "question_id": "unanswerable-04",
@@ -978,7 +979,7 @@
           0.2
         ],
         "rank": null,
-        "latency_ms": 32.66
+        "latency_ms": 34.66
       },
       {
         "question_id": "unanswerable-05",
@@ -1006,7 +1007,7 @@
           0.22916667
         ],
         "rank": null,
-        "latency_ms": 34.08
+        "latency_ms": 36.36
       },
       {
         "question_id": "unanswerable-06",
@@ -1034,7 +1035,7 @@
           0.2
         ],
         "rank": null,
-        "latency_ms": 33.14
+        "latency_ms": 47.34
       },
       {
         "question_id": "unanswerable-07",
@@ -1062,7 +1063,7 @@
           0.17777778
         ],
         "rank": null,
-        "latency_ms": 33.85
+        "latency_ms": 40.54
       },
       {
         "question_id": "unanswerable-08",
@@ -1072,7 +1073,7 @@
         "ranked_movie_ids": [],
         "scores": [],
         "rank": null,
-        "latency_ms": 29.65
+        "latency_ms": 31.66
       },
       {
         "question_id": "unanswerable-09",
@@ -1087,7 +1088,7 @@
           "the-four-dark-minutes-1977-210",
           "the-refrigerated-capsule-2010-161",
           "salt-lantern-1999-67",
-          "the-patron-at-table-nine-2006-139"
+          "the-covered-lamp-boat-1968-239"
         ],
         "scores": [
           0.7,
@@ -1100,7 +1101,7 @@
           0.33333334
         ],
         "rank": null,
-        "latency_ms": 35.03
+        "latency_ms": 37.53
       },
       {
         "question_id": "unanswerable-10",
@@ -1110,7 +1111,7 @@
         "ranked_movie_ids": [],
         "scores": [],
         "rank": null,
-        "latency_ms": 30.89
+        "latency_ms": 32.64
       }
     ]
   },

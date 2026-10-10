@@ -148,6 +148,16 @@ def _table(header: Sequence[str], rows: Sequence[Sequence[str]]) -> str:
     return "\n".join(lines)
 
 
+def index_description(index: IndexInfo, *, unit: str = "passages") -> str:
+    """What was indexed, from the data: the synthetic fixture alone, or a collection that also holds other films."""
+    if index.other_points == 0:
+        return f"the synthetic sample library ({index.points} indexed {unit}, collection `{index.collection}`)"
+    return (
+        f"collection `{index.collection}` ({index.points} indexed {unit}, {index.other_points} of them not from the "
+        "synthetic sample library)"
+    )
+
+
 def _retrieval_row(label: str, metrics: RetrievalMetrics, ks: Sequence[int]) -> list[str]:
     return [label, str(metrics.n), *(_num(metrics.hit_at_k.get(k)) for k in ks), _num(metrics.mrr)]
 
@@ -214,9 +224,10 @@ def render_markdown(reports: Sequence[EvalReport]) -> str:
             ],
         ),
         "",
-        f"Embeddings: dense `{first.embedding_model}`, sparse `{first.sparse_model}`. Collection "
-        f"`{first.index.collection}`. Retrieval depth {first.retrieval.depth}. The judge model is always different "
-        "from the generator model (checked at run time).",
+        f"Embeddings: dense `{first.embedding_model}`, sparse `{first.sparse_model}`. Index: "
+        f"{index_description(first.index, unit='chunks')}. Retrieval depth {first.retrieval.depth}. "
+        "The judge model is always different from the generator model "
+        "(checked at run time).",
         "",
         "## Retrieval (deterministic, no credentials)",
         "",
@@ -355,8 +366,8 @@ def render_readme_block(reports: Sequence[EvalReport]) -> str:
     out = [
         README_BEGIN,
         "",
-        f"Synthetic fixture: {first.question_set.n} questions over {first.index.points} indexed chunks "
-        f"(collection `{first.index.collection}`), retrieval depth {first.retrieval.depth}. Hit@k and MRR are over the "
+        f"{first.question_set.n} questions over {index_description(first.index, unit='chunks')}, retrieval depth "
+        f"{first.retrieval.depth}. Hit@k and MRR are over the "
         f"{first.retrieval.overall.n} questions that have a gold film; latency is one in-process `search_movies` call.",
         "",
         _table(
@@ -414,57 +425,44 @@ def _llm_rows_by_label(reports: Sequence[EvalReport], labels: Sequence[str]) -> 
     return [row for row in _llm_rows(reports) if row[0].startswith(tuple(labels))]
 
 
-def _rename(rows: list[list[str]], names: dict[str, str]) -> list[list[str]]:
-    return [[next((v for k, v in names.items() if row[0].startswith(k)), row[0]), *row[1:]] for row in rows]
-
-
 def render_overview_quality(reports: Sequence[EvalReport]) -> str:
-    """Section 4 of ``docs/SOLUTION_OVERVIEW.md``: how often the right film is found and what the LLM half says."""
+    """Section 4 of ``docs/SOLUTION_OVERVIEW.md``: one small table, three plain-language measures per search method."""
     if not reports:
         raise EvalError("nothing to render: no evaluation reports")
     first = reports[0]
-    ks = first.retrieval.k_values
+    # the LLM rows are [label, one cell per report]: take the cell of each report by position
+    faithfulness = _llm_rows_by_label(reports, ("RAGAS faithfulness",))[0]
+    abstention = _llm_rows_by_label(reports, ("Correct abstention",))[0]
     rows = []
-    for r in reports:
-        fuzzy = r.retrieval.by_type.get("fuzzy_plot")
+    for position, r in enumerate(reports, start=1):
         overall = r.retrieval.overall
         rows.append(
             [
                 MODE_PLAIN[r.mode],
-                *(_num(overall.hit_at_k.get(k), 2) for k in ks),
-                _num(overall.mrr, 2),
-                _num(fuzzy.hit_at_k.get(1), 2) if fuzzy is not None else "n/a",
+                _num(overall.hit_at_k.get(1), 2),
+                _num(overall.hit_at_k.get(3), 2),
+                faithfulness[position],
+                abstention[position],
             ]
         )
-    llm_names = {
-        "RAGAS faithfulness": "Answers stay true to their sources (faithfulness)",
-        "Correct abstention": 'Says "I don\'t know" when it should',
-        "False abstention": 'Says "I don\'t know" when it should not',
-    }
-    llm_rows = _rename(
-        _llm_rows_by_label(reports, ("RAGAS faithfulness", "Correct abstention", "False abstention")), llm_names
-    )
     out = [
         OVERVIEW_QUALITY_BEGIN,
         "",
-        f"Measured on the synthetic sample library ({first.index.points} indexed passages). "
+        f"Measured on {index_description(first.index)}. "
         f"{first.retrieval.overall.n} of the {first.question_set.n} questions have a known right film. "
-        "Each cell is the share of those questions for which the right film appears in the first results "
-        "(1.00 means always).",
+        "The first two columns show how often the right film comes first, or among the first three (1.00 means "
+        "always). The last two need the language model and stay pending until a key is set.",
         "",
         _table(
             [
                 "Search method",
-                *(f"Right film in top {k}" for k in ks),
-                "Average rank score (MRR)",
-                "Top 1, story-description questions",
+                "Right film first",
+                "Right film in top 3",
+                "Answers stay true to sources",
+                'Says "I don\'t know" when it should',
             ],
             rows,
         ),
-        "",
-        "Measures that need the language model (pending until a key is set):",
-        "",
-        _table(["Measure", *(MODE_PLAIN[r.mode] for r in reports)], llm_rows),
         "",
         OVERVIEW_QUALITY_END,
     ]

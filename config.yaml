@@ -78,6 +78,7 @@ data:
   http_timeout_s: 60
 
 eval:
+  collection: movie_plots_eval          # the evaluation indexes the fixture here and never writes into qdrant.collection
   questions_path: src/movie_rag/eval/data/questions_v1.jsonl            # 40 questions, 10 per type (docs/EVAL_SET.md)
   generated_path: src/movie_rag/eval/data/questions_v1_generated.jsonl  # output of the paraphrase generator (needs a key)
   per_type: 10

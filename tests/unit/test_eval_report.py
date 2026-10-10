@@ -23,6 +23,7 @@ from movie_rag.eval.report import (
     README_END,
     EvalReport,
     LlmSection,
+    index_description,
     read_reports,
     render_markdown,
     render_overview_quality,
@@ -272,28 +273,41 @@ def test_update_readme_refuses_a_missing_or_duplicated_block(text: str) -> None:
 # --- stakeholder overview blocks ---------------------------------------------------------------------------------
 
 
-def test_the_overview_quality_block_carries_the_json_numbers_in_plain_words(reports: list[EvalReport]) -> None:
+def test_the_overview_quality_block_is_one_small_table_with_the_json_numbers(reports: list[EvalReport]) -> None:
     block = render_overview_quality(reports)
     assert block.startswith(OVERVIEW_QUALITY_BEGIN) and block.endswith(OVERVIEW_QUALITY_END)
+    assert block.count("\n| Search method |") == 1  # one table
     for report, label in zip(
         reports, ("Meaning (dense)", "Exact words (sparse)", "Both combined (hybrid)"), strict=True
     ):
         overall = report.retrieval.overall
         row = next(line for line in block.splitlines() if line.startswith(f"| {label} |"))
         cells = [c.strip() for c in row.strip("|").split("|")]
-        ks = report.retrieval.k_values
-        assert cells[1 : 1 + len(ks)] == [f"{overall.hit_at_k[k]:.2f}" for k in ks]
-        assert overall.mrr is not None and cells[1 + len(ks)] == f"{overall.mrr:.2f}"
+        assert len(cells) == 5
+        assert cells[1:3] == [f"{overall.hit_at_k[1]:.2f}", f"{overall.hit_at_k[3]:.2f}"]
     assert f"{reports[0].question_set.n} questions" in block and f"{reports[0].index.points} indexed passages" in block
+    assert f"collection `{reports[0].index.collection}`" in block and "synthetic sample library" in block
 
 
 def test_the_overview_marks_llm_measures_pending_then_shows_them(settings: Settings, reports: list[EvalReport]) -> None:
     pending_block = render_overview_quality([pending(settings, r) for r in reports])
-    rows = [line for line in pending_block.splitlines() if "I don't know" in line or "faithfulness" in line]
-    assert len(rows) == 3 and all(row.count("pending credentials") == 3 for row in rows)
+    rows = [line for line in pending_block.splitlines() if line.startswith("| Meaning") or "| Both" in line[:8]]
+    assert len(rows) == 2 and all(row.count("pending credentials") == 2 for row in rows)
     done = render_overview_quality([with_llm(r, completed(settings)) for r in reports])
-    assert "| Answers stay true to their sources (faithfulness) | 0.910 (2/3) |" in done
-    assert "pending credentials" not in done
+    assert "| 0.910 (2/3) | 1.000 |" in done and "pending credentials" not in done
+
+
+def test_the_index_is_described_from_the_data_not_assumed(reports: list[EvalReport]) -> None:
+    fixture_only = reports[0].index.model_copy(update={"other_points": 0})
+    mixed = fixture_only.model_copy(update={"other_points": 7, "collection": "movie_plots"})
+    assert "synthetic sample library" in index_description(fixture_only)
+    text = index_description(mixed)
+    assert "7 of them not from the synthetic sample library" in text and "collection `movie_plots`" in text
+    assert index_description(fixture_only, unit="chunks").count("chunks") == 1
+    assert "not from the synthetic" in render_overview_quality([r.model_copy(update={"index": mixed}) for r in reports])
+    assert "7 of them not from the synthetic" in render_readme_block(
+        [r.model_copy(update={"index": mixed}) for r in reports]
+    )
 
 
 def test_the_overview_speed_block_converts_agent_milliseconds_to_seconds(

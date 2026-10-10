@@ -156,14 +156,18 @@ def _smoke(settings: Settings, *, llm: bool, deps: Dependencies | None) -> int:
 def _report(settings: Settings) -> int:
     directory = settings.eval.resolve(settings.eval.reports_dir)
     reports = read_reports(directory)
-    target = directory / RESULTS_NAME
-    target.write_text(render_markdown(reports), encoding="utf-8")
-    say(f"wrote {target}")
+    # Render and validate every target first (a missing marker raises), so a failure never leaves a partial update.
+    page = render_markdown(reports)
     readme = settings.eval.resolve(settings.eval.readme_path)
-    readme.write_text(update_readme(readme.read_text(encoding="utf-8"), render_readme_block(reports)), encoding="utf-8")
-    say(f"updated the results block of {readme}")
+    readme_text = update_readme(readme.read_text(encoding="utf-8"), render_readme_block(reports))
     overview = settings.eval.resolve(settings.eval.overview_path)
-    overview.write_text(update_overview(overview.read_text(encoding="utf-8"), reports), encoding="utf-8")
+    overview_text = update_overview(overview.read_text(encoding="utf-8"), reports)
+    target = directory / RESULTS_NAME
+    target.write_text(page, encoding="utf-8")
+    say(f"wrote {target}")
+    readme.write_text(readme_text, encoding="utf-8")
+    say(f"updated the results block of {readme}")
+    overview.write_text(overview_text, encoding="utf-8")
     say(f"updated the result blocks of {overview}")
     return EXIT_OK
 
