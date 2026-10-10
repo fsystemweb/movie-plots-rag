@@ -34,3 +34,8 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-05] Argument validation errors raised by FastMCP/pydantic itself (bad `top_k`, too-short `query`) keep pydantic's multi-line message; only errors from our own code are one-line. Wrap them if the agent (PR-06) wastes tokens on them.
 - [PR-05] The `mcp-server` image downloads the FastEmbed models on the first query into the `fastembed_models` volume (needs network at that moment); bake them into the image if an offline demo is required. The uv version in the `Dockerfile` is pinned to the dev version (0.12.24).
 - [PR-05] PR-04 QA m3 (hybrid unit tests that assert only counts on the in-memory engine) was not touched: `tests/unit/test_retrieval.py::test_mode_and_top_k_default_to_the_configuration` and the CLI all-modes test still rely on counts for hybrid; the behavioural coverage is `tests/integration/test_retrieval_qdrant.py` with `QDRANT_URL`.
+- [PR-05 QA m1] `list_filters` sets `truncated=True` when the value count exactly equals the cap (`retrieval/search.py:317`); fetch limit+1.
+- [PR-05 QA m2] Ambiguous-title message understates the count when >10 films share a title (`mcp_server/server.py:197,207`, `retrieval/search.py:241,255`); `find_by_title` hard-codes a default of 10 duplicating config.
+- [PR-05 QA m3] `--healthcheck` always probes 127.0.0.1 (`mcp_server/__main__.py:25,48`); fails if bound to a specific non-loopback interface.
+- [PR-05 QA m4] FastMCP's own argument validation surfaces pydantic's long multi-line messages (with docs URL) to the agent; consider a compact formatter.
+- [PR-05 QA m5] `test_the_default_server_builds_a_real_retriever_lazily` (`tests/unit/test_mcp_server.py:440`) does not assert laziness; unused `monkeypatch`.
