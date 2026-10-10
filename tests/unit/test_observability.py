@@ -258,3 +258,44 @@ def test_span_uploads_metadata_inputs_outputs_and_latency_without_secrets(make_s
     assert outer_meta.keys() >= REQUIRED_KEYS and outer_meta["tool"] == "t" and outer_meta["retrieval_mode"] == "sparse"
     assert outer_meta["genre"] == "***"
     assert FAKE_KEY not in capture.payloads and CONFIGURED_SECRET not in capture.payloads
+
+
+# --- trace link (used by the Streamlit page) -------------------------------------------------------------------
+
+
+class _Run:
+    def __init__(self, url: str | Exception) -> None:
+        self.url = url
+
+    def get_url(self) -> str:
+        if isinstance(self.url, Exception):
+            raise self.url
+        return self.url
+
+
+def test_trace_url_is_none_when_tracing_is_off(make_settings: MakeSettings) -> None:
+    handle = observability.Span(make_settings(), _Run("https://smith.example/r/1"))
+    assert handle.trace_url() is None
+
+
+def test_trace_url_is_none_without_a_run(make_settings: MakeSettings) -> None:
+    on = make_settings(LANGSMITH_TRACING="true", LANGSMITH_API_KEY="fake-ls-key-456")
+    assert observability.Span(on).trace_url() is None
+
+
+def test_trace_url_is_the_runs_link_when_tracing_is_on(make_settings: MakeSettings) -> None:
+    on = make_settings(LANGSMITH_TRACING="true", LANGSMITH_API_KEY="fake-ls-key-456")
+    assert observability.Span(on, _Run("https://smith.example/r/1")).trace_url() == "https://smith.example/r/1"
+
+
+def test_a_link_that_cannot_be_built_is_none_not_an_error(
+    make_settings: MakeSettings, caplog: pytest.LogCaptureFixture
+) -> None:
+    on = make_settings(LANGSMITH_TRACING="true", LANGSMITH_API_KEY="fake-ls-key-456")
+    assert observability.Span(on, _Run(RuntimeError("tenant lookup failed"))).trace_url() is None
+    assert "could not build the LangSmith trace link" in caplog.text
+
+
+def test_the_span_handle_carries_the_run_so_the_caller_can_ask_for_the_link(make_settings: MakeSettings) -> None:
+    with observability.span("t", settings=make_settings()) as handle:
+        assert handle.trace_url() is None  # tracing is off in tests

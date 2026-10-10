@@ -94,6 +94,12 @@ class AgentConfig(_Section):
     mcp_timeout_s: float = Field(gt=0)
 
 
+class UiConfig(_Section):
+    title: str = Field(min_length=1)
+    mcp_timeout_s: float = Field(gt=0)
+    example_questions: list[str] = Field(min_length=1)
+
+
 class ObservabilityConfig(_Section):
     project: str
     langsmith_api_url: str
@@ -129,6 +135,7 @@ TUNABLE_SECTIONS = (
     "llm",
     "mcp",
     "agent",
+    "ui",
     "observability",
     "data",
     "doctor",
@@ -155,6 +162,7 @@ class Settings(BaseSettings):
     llm: LLMConfig
     mcp: McpConfig
     agent: AgentConfig
+    ui: UiConfig
     observability: ObservabilityConfig
     data: DataConfig
     doctor: DoctorConfig

@@ -52,6 +52,15 @@ agent:
   max_citations: 5   # films cited per answer (the prompt asks for at most this many)
   mcp_timeout_s: 30  # HTTP timeout of the agent's MCP connection (per request)
 
+ui:
+  title: Movie Plots RAG
+  mcp_timeout_s: 30   # HTTP timeout of the page's own MCP connection (retrieval-only mode, filters, compare tab)
+  example_questions:  # the four buttons above the chat input
+    - a hotel telephone operator overhears a call arranging a death at midnight
+    - an engineer on a colony ship discovers an unknown language hidden in the water supply
+    - a murder seen through a glass wall by a window cleaner, 1990s thriller
+    - a talking dinosaur runs for president of Mars
+
 observability:
   project: movie-plots-rag
   langsmith_api_url: https://api.smith.langchain.com

@@ -140,13 +140,24 @@ def scrub(value: Any, settings: Settings) -> Any:
 class Span:
     """Handle yielded by :func:`span`: collect the outputs of the traced operation with :meth:`set`."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, run: Any = None) -> None:
         self._settings = settings
+        self._run = run
         self.outputs: dict[str, Any] = {}
 
     def set(self, **outputs: Any) -> None:
         """Record outputs (for example ``result_count``); values are scrubbed before they are traced."""
         self.outputs.update(scrub(outputs, self._settings))
+
+    def trace_url(self) -> str | None:
+        """Link to this run in LangSmith, or ``None`` when tracing is off or the link cannot be built."""
+        if self._run is None or not self._settings.tracing_requested:
+            return None
+        try:
+            return str(self._run.get_url())
+        except Exception:  # building the link may call the LangSmith API; a trace link is never worth a failure
+            logger.warning("could not build the LangSmith trace link", exc_info=True)
+            return None
 
 
 @contextmanager
@@ -165,7 +176,6 @@ def span(
     re-raised unchanged.
     """
     settings = settings or load_settings()
-    handle = Span(settings)
     started = time.perf_counter()
     with ls.trace(
         name,
@@ -173,6 +183,7 @@ def span(
         inputs=scrub(dict(inputs or {}), settings),
         metadata=run_metadata(settings, **scrub(metadata, settings)),
     ) as run:
+        handle = Span(settings, run)
         try:
             yield handle
         finally:

@@ -115,6 +115,28 @@ question is asked, so importing the package or running the tests never needs a k
   run metadata (git sha, prompt version, chat model, embedding model, retrieval mode, config hash), which is also on
   the LangSmith spans. Secrets never reach the model or a trace.
 
+## Test page
+
+```bash
+make serve          # in one terminal (after `make up` + `make ingest`)
+make ui             # Streamlit on http://localhost:8501
+```
+
+![The Streamlit test page in retrieval-only mode](docs/img/ui.png)
+
+`src/movie_rag/ui/` holds the page: `service.py` is the logic (no `streamlit` import), `app.py` only renders.
+The sidebar has the mode, `top_k`, a year range, genre and origin (filled from the `list_filters` tool) and a
+"Retrieval only" switch; above the chat input are four example questions (`ui.example_questions`).
+
+- **Retrieval only** (the default when no `NEBIUS_API_KEY` is set) calls the `search_movies` MCP tool at `mcp.url` and
+  lists the films with score, snippet, year and genre. It makes no LLM call and needs no credential. It goes through
+  MCP, like the agent, so there is one retrieval path and no embedding model is loaded in the Streamlit process.
+- **Agent** answers with `MovieAgent`: answer text, sources, a "Retrieved films" expander, an "Agent steps" expander
+  (tool calls), latency, tokens and, when LangSmith tracing is on, a trace link. Without a key it shows the
+  credentials hint instead of an answer.
+- **Compare modes** runs one query in dense, sparse and hybrid mode side by side (retrieval only).
+- If the MCP server is not running, every action says so, naming `mcp.url` and `make serve`.
+
 ## Make targets
 
 | Target | What it does | Status |
@@ -132,7 +154,7 @@ question is asked, so importing the package or running the tests never needs a k
 | `demo` | `up` + `ingest` on the fixture + the sample query in dense, sparse and hybrid mode (`Q="..."` to ask your own); no credentials | ready |
 | `serve` | MCP server over HTTP at `mcp.url` (`STDIO=1` for stdio, `DOCKER=1` for the compose service with healthcheck) | ready |
 | `ask` | CLI agent: `make ask Q="..."` (`MODE=dense\|sparse\|hybrid`, `JSON=1`); needs `make serve` and `NEBIUS_API_KEY` (without it: prints the hint, exits 2) | ready |
-| `ui` | Streamlit page | PR-07 |
+| `ui` | Streamlit test page (`PORT=`, `HEADLESS=1`); needs `make serve`; the agent half needs `NEBIUS_API_KEY`, "Retrieval only" does not | ready |
 | `eval`, `eval-smoke`, `report` | evaluation harness (`eval-smoke LLM=1` adds RAGAS) | PR-09 |
 
 ## Built autonomously
