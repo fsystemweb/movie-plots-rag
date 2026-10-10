@@ -4,25 +4,129 @@ A movie-discovery RAG agent that answers fuzzy plot questions ("a heist movie wh
 getaway driver") with cited results. Hybrid retrieval (dense + BM25 with RRF) over Qdrant, served through an MCP
 server, consumed by a LangChain agent, with a Streamlit test page and a RAGAS evaluation harness.
 
-> Status: under construction. A `make` target that is not built yet prints `not implemented yet (PR-NN)`.
-> See [`docs/PR_TRACKER.md`](docs/PR_TRACKER.md).
+Everything up to retrieval, the MCP server, the test page and the retrieval metrics runs **without any API key**. Only
+the LLM answers and the RAGAS scores need one (see [What needs a key](#what-needs-a-key)).
 
-## Quickstart
+## Architecture
 
-Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker (for Qdrant).
-
-```bash
-make setup                  # uv sync --all-extras --dev, installs pre-commit hooks
-make check                  # lint + format check + mypy (strict) + tests with the 80% coverage gate
-docker compose up -d qdrant # Qdrant v1.15.4 on :6333, with a healthcheck and a named volume
-docker compose ps           # STATUS shows "healthy" once /readyz answers
-docker compose down         # stop it (data stays in the qdrant_storage volume)
+```mermaid
+flowchart LR
+    subgraph Data
+        CSV["Kaggle CSV (data/raw)<br/>or tests/fixtures/movies_sample.csv"]
+    end
+    subgraph Ingest["make ingest"]
+        CLEAN["clean + chunk<br/>(250 tokens, 40 overlap)"] --> EMB["FastEmbed, local<br/>bge-small-en-v1.5 + Qdrant/bm25"]
+    end
+    CSV --> CLEAN
+    EMB -->|"dense + bm25 vectors<br/>per chunk"| QD[("Qdrant v1.15.4<br/>collection movie_plots")]
+    subgraph MCP["make serve: FastMCP server (/mcp)"]
+        TOOLS["search_movies, get_movie,<br/>find_similar, list_filters"] --> RET["Retriever<br/>dense | sparse | hybrid (RRF)"]
+    end
+    RET -->|"one Query API call"| QD
+    AG["LangChain agent<br/>(make ask)"] -->|"langchain-mcp-adapters"| TOOLS
+    AG -->|"OpenAI-compatible API"| NEB["Nebius Token Factory<br/>chat + judge models"]
+    UI["Streamlit page<br/>(make ui)"] -->|"retrieval only: no key"| TOOLS
+    UI -.->|"agent mode"| AG
+    EV["Eval runner<br/>(make eval)"] -->|"in-process MCP client"| TOOLS
+    EV -.->|"agent + RAGAS, needs key"| AG
+    EV -.->|"RAGAS judge"| NEB
+    LS["LangSmith<br/>traces + experiments"]
+    EMB -.-> LS
+    TOOLS -.-> LS
+    AG -.-> LS
+    EV -.-> LS
 ```
 
-No credentials are needed to build, test or run the retrieval path. Tunables live in [`config.yaml`](config.yaml);
-environment variable names are in `.env.example`. `make doctor` shows what is configured and what to do next.
-Data: development and CI use the synthetic [`tests/fixtures/movies_sample.csv`](tests/fixtures/README.md); the real
-dataset and its licence are described in [`docs/DATASET.md`](docs/DATASET.md).
+Solid arrows run without credentials; dashed ones need a key (Nebius) or are no-ops without one (LangSmith). Design
+decisions: [`docs/adr/`](docs/adr/README.md) ([Qdrant](docs/adr/001-qdrant.md), [RRF and parameters](docs/adr/002-rrf-and-parameters.md),
+[chunking](docs/adr/003-chunking.md), [local embeddings](docs/adr/004-local-embeddings.md)).
+
+## Quickstart (no keys)
+
+Prerequisites: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker with Compose, git, `make`. Ports 6333 (Qdrant),
+8000 (MCP server) and 8501 (Streamlit) free. About 64 MB of embedding models are downloaded on first use.
+
+```bash
+git clone https://github.com/fsystemweb/movie-plots-rag.git
+cd movie-plots-rag
+make setup     # uv sync --all-extras --dev (+ pre-commit hooks)
+make demo      # starts Qdrant, ingests the synthetic fixture, runs a sample query in dense, sparse and hybrid mode
+```
+
+`make demo` ends by printing the sample query (`retrieval.demo_query` in `config.yaml`) answered by all three modes;
+`make demo Q="your own plot description"` asks something else. Then:
+
+```bash
+make serve     # terminal 1: MCP server on http://127.0.0.1:8000/mcp (needs the demo's Qdrant + data)
+make ui        # terminal 2: Streamlit test page on http://localhost:8501, "Retrieval only" mode needs no key
+make down      # stop Qdrant (the data stays in the qdrant_storage volume)
+```
+
+Other useful commands: `make doctor` (what is configured, what to do next), `make check` (lint, format, mypy strict,
+tests with the 80% coverage gate), `make eval && make report` (retrieval metrics and the Results block below).
+
+### What needs a key
+
+| Needs | Variable | Without it |
+|---|---|---|
+| The agent's answers (`make ask`, the page's agent mode), RAGAS | `NEBIUS_API_KEY` | prints `set NEBIUS_API_KEY — see docs/CREDENTIALS.md` and exits; the page falls back to "Retrieval only"; reports say "pending credentials" |
+| The real 35k-film dataset (`make download`) | `KAGGLE_USERNAME`, `KAGGLE_KEY` | prints what to set; `make ingest` uses the synthetic fixture |
+| LangSmith traces and experiments | `LANGSMITH_API_KEY`, `LANGSMITH_TRACING` | tracing is a no-op with identical code paths |
+
+The credentials guide (`docs/CREDENTIALS.md`) is coming in PR-11; until then the variable names are in `.env.example`
+and the tunables in [`config.yaml`](config.yaml). Development and CI use the synthetic
+[`tests/fixtures/movies_sample.csv`](tests/fixtures/README.md); the real dataset and its licence are described in
+[`docs/DATASET.md`](docs/DATASET.md).
+
+## Results
+
+The block below is generated by `make report` from the committed `reports/eval_<mode>.json` files and is checked
+against them by a test (`tests/unit/test_readme_results.py`): do not edit it by hand, and every figure in it traces to
+those files. Regenerate with `make eval && make report` (needs Qdrant: `make up`).
+
+<!-- BEGIN RESULTS (generated by `make report` from reports/eval_<mode>.json; do not edit by hand) -->
+
+Synthetic fixture: 40 questions over 304 indexed chunks (collection `movie_plots`), retrieval depth 8. Hit@k and MRR are over the 30 questions that have a gold film; latency is one in-process `search_movies` call.
+
+| Mode | n | Hit@1 | Hit@3 | Hit@5 | Hit@8 | MRR | Hit@1 (fuzzy plot) | latency p50 (ms) | latency p95 (ms) |
+|---|---|---|---|---|---|---|---|---|---|
+| dense | 30 | 0.767 | 0.767 | 0.833 | 0.900 | 0.792 | 0.700 | 37 | 61 |
+| sparse | 30 | 0.967 | 1.000 | 1.000 | 1.000 | 0.983 | 1.000 | 21 | 22 |
+| hybrid | 30 | 0.883 | 1.000 | 1.000 | 1.000 | 0.942 | 0.950 | 34 | 69 |
+
+LLM-backed metrics (the agent answering, then RAGAS judging it):
+
+| Metric | dense | sparse | hybrid |
+|---|---|---|---|
+| RAGAS faithfulness | pending credentials | pending credentials | pending credentials |
+| RAGAS response relevancy | pending credentials | pending credentials | pending credentials |
+| RAGAS context precision | pending credentials | pending credentials | pending credentials |
+| RAGAS context recall | pending credentials | pending credentials | pending credentials |
+| Correct abstention rate (unanswerable questions, higher is better) | pending credentials | pending credentials | pending credentials |
+| False abstention rate (answerable questions, lower is better) | pending credentials | pending credentials | pending credentials |
+| Citation hit rate (gold film cited) | pending credentials | pending credentials | pending credentials |
+
+Run: dense at `6ffa441` on 2026-10-10T13:41:15+00:00; sparse at `6ffa441` on 2026-10-10T13:41:16+00:00; hybrid at `6ffa441` on 2026-10-10T13:41:17+00:00. Embeddings `BAAI/bge-small-en-v1.5` and `Qdrant/bm25`; RAGAS 0.4.3, judge `openai/gpt-oss-120b`, generator `Qwen/Qwen3-30B-A3B-Instruct-2507`. Full tables (by question type, tokens, latency, LangSmith): [`reports/EVAL_RESULTS.md`](reports/EVAL_RESULTS.md).
+
+<!-- END RESULTS -->
+
+### What the fixture can and cannot show
+
+* **It proves the pipeline works end to end without credentials**: ingest, the three retrieval modes, filters,
+  the MCP tools, the page, and the metric code (Hit@k, MRR, tie handling) all run on it, in CI as well.
+* **It cannot rank the modes for real data.** The fixture is a few hundred *synthetic* films whose plots are built
+  around a rare invented noun per film, so a keyword match is almost always enough: BM25 is nearly perfect, and
+  dense and hybrid can only look equal or worse. The expected advantage of hybrid on real plots (many films sharing
+  vocabulary, paraphrased questions, thousands of competing candidates) is not something these numbers can show, and
+  the RRF parameters were not tuned on them ([ADR 002](docs/adr/002-rrf-and-parameters.md)).
+* **The sample is small.** A difference of one or two questions is noise, and the gold ids belong to the fixture, so
+  the same questions cannot be reused on the real dataset (a new set is generated with `python -m movie_rag.eval.generate`
+  and needs a key).
+* **LLM metrics are pending.** RAGAS faithfulness, relevancy, precision and recall, abstention and citation rates
+  need `NEBIUS_API_KEY`; the table shows "pending credentials", which is not zero. The first live run is also the first
+  test of the agent against a real model.
+* Hybrid rankings below the top are not exactly repeatable between identical calls (server-side tie-breaking); the
+  metrics are tie-aware to absorb it ([`docs/EVALUATION.md`](docs/EVALUATION.md)).
 
 ## Ingestion
 
@@ -65,7 +169,8 @@ uv run python -m movie_rag.retrieval "a detective loses his memory" --mode hybri
   that chunk, a snippet of at most `retrieval.snippet_max_chars` characters and its Wikipedia link. Scores are only
   comparable within a mode (cosine, BM25 or RRF). `Retriever.get_movie` reads the whole plot from chunk 0 by id.
 * **Parameters** (`config.yaml`, `retrieval:`): `default_mode`, `top_k`, `prefetch_limit`, `snippet_max_chars`,
-  `demo_query`. The RRF constant is not configurable on Qdrant 1.15 (needs qdrant-client and server 1.16).
+  `demo_query`. The RRF constant is fixed (effective value 2): qdrant-client 1.15.1 cannot send a parametric RRF, which
+  needs 1.16 or later ([ADR 002](docs/adr/002-rrf-and-parameters.md)).
 
 ## MCP server
 
@@ -141,7 +246,7 @@ The sidebar has the mode, `top_k`, a year range, genre and origin (filled from t
 
 ```bash
 make up && make eval        # Hit@k, MRR, latency for dense, sparse and hybrid on the fixture -> reports/eval_<mode>.json
-make report                 # reports/EVAL_RESULTS.md, rendered from those JSON files only
+make report                 # reports/EVAL_RESULTS.md and the Results block of this README, rendered from those JSON files only
 make eval-smoke             # what CI runs: the same retrieval metrics, nothing written
 ```
 
@@ -170,7 +275,7 @@ retrieval's advantage are in [`docs/EVALUATION.md`](docs/EVALUATION.md); the num
 | `ui` | Streamlit test page (`PORT=`, `HEADLESS=1`); needs `make serve`; the agent half needs `NEBIUS_API_KEY`, "Retrieval only" does not | ready |
 | `eval` | Hit@k / MRR / latency per mode into `reports/eval_<mode>.json` (`MODE=dense\|sparse\|hybrid`, default all); agent + RAGAS half when `NEBIUS_API_KEY` is set (`LLM=0` skips it); needs `make up` | ready |
 | `eval-smoke` | the retrieval half for all modes, nothing written, fails below `eval.smoke_min_mrr`; `LLM=1` adds a small agent + RAGAS sample (skipped without a key) | ready |
-| `report` | render `reports/EVAL_RESULTS.md` from the `eval_<mode>.json` files | ready |
+| `report` | render `reports/EVAL_RESULTS.md` and the README's Results block from the `eval_<mode>.json` files | ready |
 
 ## Built autonomously
 

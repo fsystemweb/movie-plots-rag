@@ -85,3 +85,8 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-09 QA m7] `tests/unit/test_eval_cli.py:66` assertion passes for either label; check `"not requested" in out` directly.
 - [PR-09] ragas forces downgrades in the single lock (openai 3.28→3.3, rich 15→14.3.4, jiter 0.17→0.14, fsspec 2026.9→2026.7) that the server image also gets; revisit when instructor/datasets release.
 - [PR-09] Test suite ~281 s locally (stop-gate timeout 540 s); keep new tests cheap.
+- [PR-10] `make report` now also rewrites the marked results block of `README.md` (`eval.readme_path`); `tests/unit/test_readme_results.py` fails when `reports/eval_<mode>.json` and the README block disagree, so refreshed reports must be committed together with `make report` output.
+- [PR-10] `docker-compose.yml` fixes `container_name: movie-rag-qdrant` (and `movie-rag-mcp`), so a second checkout on the same machine conflicts with a running stack unless it shares the compose project (`COMPOSE_PROJECT_NAME`); `docker-compose.yml` is outside the builder's remit to change in this PR, consider dropping `container_name`.
+- [PR-10] ADR 003 records the fixture's chunk statistics only; the plot-length distribution (and chunk count) of the 35k-film dataset is unmeasured until `make download && make ingest` runs with Kaggle credentials.
+- [PR-10] README and ADR 002 now state the PR-04 QA m1 facts (effective RRF k = 2; the limit is the client); the actual fix (bump qdrant-client to >= 1.16, add `retrieval.rrf_k`, re-run `make eval`) is still open. PR-09 QA m6 (wording in `docs/prs/PR-09.md`) and m7 (`test_eval_cli.py` assertion) are fixed.
+- [PR-10] The README's quickstart links `docs/CREDENTIALS.md` as "coming in PR-11"; replace with a live link when PR-11 lands.
