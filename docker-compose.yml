@@ -1,4 +1,4 @@
-# Local Qdrant. Keep the image tag in sync with .github/workflows/ci.yml.
+# Local Qdrant and the MCP server. Keep the Qdrant image tag in sync with .github/workflows/ci.yml.
 services:
   qdrant:
     image: qdrant/qdrant:v1.15.4
@@ -24,5 +24,30 @@ services:
       retries: 20
       start_period: 5s
 
+  mcp-server:
+    build: .
+    container_name: movie-rag-mcp
+    restart: unless-stopped
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      MCP__HOST: 0.0.0.0 # listen on all interfaces inside the container
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-}
+    ports:
+      - "8000:8000" # streamable HTTP at /mcp (mcp.port in config.yaml)
+    volumes:
+      - fastembed_models:/models
+    healthcheck:
+      test: [CMD, python, -m, movie_rag.mcp_server, --healthcheck]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
 volumes:
   qdrant_storage:
+  fastembed_models:

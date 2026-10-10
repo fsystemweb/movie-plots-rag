@@ -42,7 +42,7 @@ def test_qdrant_tag_matches_between_compose_and_ci() -> None:
 
 @pytest.mark.parametrize(
     ("target", "pr"),
-    [("serve", "PR-05"), ("eval-smoke", "PR-09")],
+    [("eval-smoke", "PR-09")],
 )
 def test_unimplemented_make_targets_are_stubs(target: str, pr: str) -> None:
     out = subprocess.run(["make", "-s", target], cwd=ROOT, capture_output=True, text=True, check=True).stdout
@@ -76,3 +76,32 @@ def test_make_demo_brings_up_qdrant_ingests_the_fixture_and_queries_in_all_modes
         ["make", "-n", "demo", "Q=a heist"], cwd=ROOT, capture_output=True, text=True, check=True
     ).stdout
     assert '"a heist"' in with_query
+
+
+def test_make_serve_runs_the_mcp_server_over_http_stdio_or_compose() -> None:
+    def dry_run(*args: str) -> str:
+        return subprocess.run(
+            ["make", "-n", "serve", *args], cwd=ROOT, capture_output=True, text=True, check=True
+        ).stdout
+
+    http = dry_run()
+    assert "python -m movie_rag.mcp_server" in http and "--transport stdio" not in http
+    assert "--transport stdio" in dry_run("STDIO=1")
+    assert "docker compose up -d --build --wait mcp-server" in dry_run("DOCKER=1")
+
+
+def test_the_mcp_server_compose_service_is_healthy_gated_and_consistent_with_the_configuration() -> None:
+    from urllib.parse import urlparse
+
+    from movie_rag.config import load_settings
+
+    compose = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
+    service = compose["services"]["mcp-server"]
+    mcp = load_settings(env_file=None).mcp
+    assert service["depends_on"]["qdrant"]["condition"] == "service_healthy"
+    assert service["environment"]["QDRANT_URL"] == "http://qdrant:6333"
+    assert service["environment"]["MCP__HOST"] == "0.0.0.0"  # reachable from outside the container
+    assert f"{mcp.port}:{mcp.port}" in service["ports"]
+    assert service["healthcheck"]["test"][-1] == "--healthcheck"
+    assert urlparse(mcp.url).path == mcp.path and urlparse(mcp.url).port == mcp.port
+    assert (ROOT / "Dockerfile").is_file() and "movie_rag.mcp_server" in (ROOT / "Dockerfile").read_text()
