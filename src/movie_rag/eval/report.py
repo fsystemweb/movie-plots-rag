@@ -208,7 +208,9 @@ def render_markdown(reports: Sequence[EvalReport]) -> str:
         "Hit@k: the gold film is among the top k films. MRR: mean of 1/rank of the gold film (0 if not retrieved). "
         "Both are averaged over the questions that have a gold film (fuzzy plot, exact entity, filtered); the "
         "unanswerable ones are measured by abstention. The ranking is `search_movies` called through the project's "
-        "MCP server.",
+        "MCP server. Films with equal scores (common in hybrid mode: reciprocal rank fusion ties a film that is first "
+        "in one list and second in the other) are in no defined order, so Hit@k and MRR are the expectation over that "
+        "order, which keeps the numbers reproducible (`docs/EVALUATION.md`).",
         "",
         _table(
             ["Mode", "n", *(f"Hit@{k}" for k in ks), "MRR", "latency p50 (ms)", "latency p95 (ms)"],
