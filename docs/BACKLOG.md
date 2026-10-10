@@ -25,3 +25,7 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-04] Qdrant 1.15.4 also pushes a top-level filter down into prefetches (observed, not documented), so the "filter only on the fused query" shape cannot be shown to fail; the per-prefetch filter is kept for being explicit and version-independent, and is asserted by a request-shape test.
 - [PR-04] Sparse mode returns fewer than `top_k` films when fewer chunks share a term with the query (BM25 gives non-matching chunks no score); the eval (PR-09) should expect that.
 - [PR-04] Retrieval spans (`@traceable`, mode/filters/latency/result count) are left to PR-05 with the MCP tool spans.
+- [PR-04 QA m1] `rrf_k` removal rationale is wrong about the server: Qdrant 1.15.4 honours `{"rrf":{"k":K}}` over REST; only qdrant-client 1.15.1 lacks `RrfQuery`. Effective k is 2 today. Bump qdrant-client ≥1.16 and re-add `retrieval.rrf_k` (before PR-09 mode comparison); fix wording in `retrieval/search.py:16-18`, README:68, PR-04 notes.
+- [PR-04 QA m2] `tests/unit/test_retrieval_cli.py:133-139` opens a real TCP connection to 127.0.0.1:1 (unit tests must not use network); mock the client.
+- [PR-04 QA m3] Three hybrid unit tests on the in-memory engine only assert counts (in-memory ignores prefetch filters) — `test_retrieval.py:355,365`, `test_retrieval_cli.py:72`; use a mock or point to the integration test.
+- [PR-04 QA m4] PR-05 must still provide exact-title lookup; `Retriever.get_movie` covers id lookup only.
