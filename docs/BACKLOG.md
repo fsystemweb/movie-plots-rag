@@ -44,3 +44,9 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-06] Citation selection looks for a retrieved film's exact `Title (Year)` label or `movie_id` in the answer text. A model that paraphrases titles without the year/id yields no citation (and the standard abstention text); check this rate on Qwen3-30B in the first live run and tune `system_v1.md` (new version, not an edit) if needed.
 - [PR-06] Each `ask` opens a fresh MCP session per tool call (`langchain-mcp-adapters` default) and re-lists the tools; keep a long-lived client/session in the Streamlit service (PR-07) if latency matters.
 - [PR-06] The live agent test (`tests/integration/test_agent_mcp.py::test_live_nebius_model_answers_from_the_real_tools`) has never run: no key yet. Run `uv run pytest -m live` once `NEBIUS_API_KEY` is set.
+- [PR-06 QA m1] Citation label match is a plain substring (`agent/citations.py:95`): naming `The Alpha (1999)` also cites a retrieved `Alpha (1999)`. Use boundary-aware matching.
+- [PR-06 QA m2] **Priority before first live run:** invented films and model-written links stay in the displayed answer text when at least one real film is cited (`agent/agent.py:253`; PR-06 transcript shows `Ghost Call (2011)`). Strip or flag uncited `Title (Year)` mentions/links.
+- [PR-06 QA m3] Fixed abstention text discards the rephrase suggestion asked for by prompt rule 5 (`agent/agent.py:253`).
+- [PR-06 QA m4] Refused tool calls detected by LangChain message wording (`BLOCKED_PREFIX`, `agent/agent.py:44,110`); only the refused count depends on it.
+- [PR-06 QA m5] `retrieval_mode` metadata shows the configured default when the model chose another mode (`agent/agent.py:197`).
+- [PR-06 QA m6] Negative mentions ("Unlike Alpha (1999)…") count as citations (`agent/citations.py:82-103`).
