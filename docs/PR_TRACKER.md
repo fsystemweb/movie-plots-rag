@@ -11,8 +11,8 @@ Orchestrator memory across restarts. Statuses: `todo · in-progress · merged ·
 | PR-05 | FastMCP server | pr/05-mcp-server | merged | [#5](https://github.com/fsystemweb/movie-plots-rag/pull/5) | ✅ | ✅ | 1 | 2026-10-10 09:14 | QA PASS r1 (5 minors → backlog); CI green first run; delivers PR-04 deferred tracing + title lookup |
 | PR-06 | Agent + CLI | pr/06-agent-cli | merged | [#6](https://github.com/fsystemweb/movie-plots-rag/pull/6) | ✅ | ✅ | 1 | 2026-10-10 09:41 | QA PASS r1 (6 minors → backlog; m2 hallucinated titles can remain in answer text); CI green first run; live test never run |
 | PR-07 | Streamlit test page | pr/07-streamlit-ui | merged | [#7](https://github.com/fsystemweb/movie-plots-rag/pull/7) | ✅ | ✅ | 1 | 2026-10-10 10:59 | QA PASS r1 (5 minors + 2 nits → backlog); CI green first run; screenshot captured headless |
-| PR-08 | Evaluation set | pr/08-eval-set | in-progress | | | | 1 | | |
-| PR-09 | Evaluation runner | pr/09-eval-runner | todo | | | | 0 | | |
+| PR-08 | Evaluation set | pr/08-eval-set | merged | [#8](https://github.com/fsystemweb/movie-plots-rag/pull/8) | ✅ | ✅ | 1 | 2026-10-10 11:30 | QA PASS r1, reviewed all 40, 0 rejections (7 minors → backlog); fixture favours BM25 (fuzzy rank-1: bm25 10/10, hybrid 9/10, dense 7/10) |
+| PR-09 | Evaluation runner | pr/09-eval-runner | in-progress | | | | 1 | | |
 | PR-10 | ADRs and README | pr/10-adrs-readme | todo | | | | 0 | | |
 | PR-11 | Stakeholder overview, credentials guide, demo | pr/11-overview-demo | todo | | | | 0 | | |
 | PR-12 | Stretch: reranker | pr/12-reranker | todo | | | | 0 | | |

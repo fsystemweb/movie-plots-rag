@@ -67,3 +67,9 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-08] `python -m movie_rag.eval.upload` never updates an existing LangSmith dataset (it would duplicate examples): bump `eval.dataset_name` when the questions change. It has only run against a mocked client (no key yet).
 - [PR-08] Cast questions are absent from the set because cast is stored as payload but not in the chunk text; add the cast to the chunk prefix (needs `make ingest RECREATE=1`) if cast lookups should be answerable.
 - [PR-08] `.gitignore` ignores every `data/` directory; `!src/movie_rag/eval/data/` re-includes the question files and generated output (`*_generated.jsonl`) stays ignored.
+- [PR-08 QA m7] **For PR-09:** on in-memory Qdrant, hybrid returns the same top 10 for every question and ignores filters (qdrant-client 1.15.1 local engine). The eval runner must use the Qdrant service (QDRANT_URL) for hybrid numbers, or refuse/flag in-memory hybrid.
+- [PR-08 QA m1] `eval/generate.py:173` `--out` (or config `generated_path`) can equal the committed `questions_path`; guard against overwriting it.
+- [PR-08 QA m2] `eval/upload.py:281-287`: with a key set, LangSmith network/auth errors surface as a traceback.
+- [PR-08 QA m3/m4/m5] fuzzy-06 keeps title word "window"; fuzzy-10 is keyword-heavy ("reef", "diver", "hull"); filtered-01/-03/-04 are isolated by the filter alone (documented).
+- [PR-08 QA m6] `docs/prs/PR-08.md` names the QA report `pr-08.md`; GitHub mode uses `pr-8.md`.
+- [PR-08] Fixture favours BM25 (rare occupation/setting nouns in a 291-film corpus): PR-09 report must say the fixture cannot show hybrid's advantage; real numbers need the full dataset.
