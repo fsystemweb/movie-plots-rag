@@ -88,7 +88,11 @@ serve:
 ask:
 	@$(RUN) python -m movie_rag.agent $(if $(MODE),--mode $(MODE),) $(if $(JSON),--json,) "$(Q)"
 
-ui:         ; @echo "not implemented yet (PR-07)"
+# Streamlit test page (needs `make serve`; the agent half also needs NEBIUS_API_KEY, retrieval-only does not).
+# PORT=8502 changes the port; HEADLESS=1 does not open a browser.
+ui:
+	@$(RUN) streamlit run src/movie_rag/ui/app.py $(if $(PORT),--server.port $(PORT),) $(if $(HEADLESS),--server.headless true,)
+
 eval:       ; @echo "not implemented yet (PR-09)"
 eval-smoke: ; @echo "not implemented yet (PR-09)"
 report:     ; @echo "not implemented yet (PR-09)"

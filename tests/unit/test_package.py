@@ -49,6 +49,16 @@ def test_unimplemented_make_targets_are_stubs(target: str, pr: str) -> None:
     assert out.strip() == f"not implemented yet ({pr})"
 
 
+def test_make_ui_runs_streamlit_on_the_page_and_forwards_its_options() -> None:
+    dry_run = subprocess.run(
+        ["make", "-n", "ui", "PORT=8502", "HEADLESS=1"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout
+    assert "streamlit run src/movie_rag/ui/app.py" in dry_run
+    assert "--server.port 8502" in dry_run and "--server.headless true" in dry_run
+    plain = subprocess.run(["make", "-n", "ui"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    assert "--server.port" not in plain and "--server.headless" not in plain
+
+
 def test_make_ingest_runs_the_ingest_module_and_forwards_its_options() -> None:
     dry_run = subprocess.run(
         ["make", "-n", "ingest", "FIXTURE=1", "RECREATE=1", "CSV=data/x.csv"],
