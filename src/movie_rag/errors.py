@@ -60,3 +60,7 @@ class McpUnavailableError(AgentError):
             f"The movie MCP server at {url} is unreachable: start it with `make serve` "
             "(after `make up` and `make ingest`) and retry."
         )
+
+
+class EvalSetError(MovieRagError):
+    """The evaluation question file is malformed or disagrees with the dataset it is checked against."""

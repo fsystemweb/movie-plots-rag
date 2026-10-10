@@ -122,6 +122,21 @@ class DataConfig(_Section):
         return path if path.is_absolute() else root / path
 
 
+class EvalConfig(_Section):
+    questions_path: Path  # the committed, hand-written and QA-reviewed evaluation set
+    generated_path: Path  # where `python -m movie_rag.eval.generate` writes (never the committed set)
+    per_type: int = Field(gt=0)  # questions per type in the committed set (4 types)
+    ngram_size: int = Field(gt=1)  # a fuzzy question may share no run of this many words with its film's plot
+    paraphrase_prompt_version: str = Field(pattern=r"^[a-z0-9_]+$")
+    generate_count: int = Field(gt=0)  # fuzzy questions one generator run tries to produce
+    max_attempts: int = Field(gt=0)  # model calls per film before the film is rejected
+    dataset_name: str = Field(min_length=1)  # LangSmith dataset created by `python -m movie_rag.eval.upload`
+
+    def resolve(self, path: Path, root: Path = PROJECT_ROOT) -> Path:
+        """Resolve a configured relative path against the project root."""
+        return path if path.is_absolute() else root / path
+
+
 class DoctorConfig(_Section):
     http_timeout_s: float = Field(gt=0)
     docker_timeout_s: float = Field(gt=0)
@@ -138,6 +153,7 @@ TUNABLE_SECTIONS = (
     "ui",
     "observability",
     "data",
+    "eval",
     "doctor",
 )
 
@@ -165,6 +181,7 @@ class Settings(BaseSettings):
     ui: UiConfig
     observability: ObservabilityConfig
     data: DataConfig
+    eval: EvalConfig
     doctor: DoctorConfig
 
     # Secrets (environment only; SecretStr never prints its value).
