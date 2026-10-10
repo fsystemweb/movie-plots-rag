@@ -62,8 +62,8 @@ class RetrievalConfig(_Section):
     default_mode: RetrievalMode
     top_k: int = Field(gt=0)
     prefetch_limit: int = Field(gt=0)
-    rrf_k: int = Field(gt=0)
     snippet_max_chars: int = Field(gt=0)
+    demo_query: str = Field(min_length=1)
 
 
 class LLMConfig(_Section):

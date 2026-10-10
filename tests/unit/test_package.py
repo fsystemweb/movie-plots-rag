@@ -42,7 +42,7 @@ def test_qdrant_tag_matches_between_compose_and_ci() -> None:
 
 @pytest.mark.parametrize(
     ("target", "pr"),
-    [("demo", "PR-04"), ("serve", "PR-05"), ("eval-smoke", "PR-09")],
+    [("serve", "PR-05"), ("eval-smoke", "PR-09")],
 )
 def test_unimplemented_make_targets_are_stubs(target: str, pr: str) -> None:
     out = subprocess.run(["make", "-s", target], cwd=ROOT, capture_output=True, text=True, check=True).stdout
@@ -62,3 +62,17 @@ def test_make_ingest_runs_the_ingest_module_and_forwards_its_options() -> None:
         assert flag in dry_run
     plain = subprocess.run(["make", "-n", "ingest"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
     assert "--fixture" not in plain and "--recreate" not in plain
+
+
+def test_make_demo_brings_up_qdrant_ingests_the_fixture_and_queries_in_all_modes() -> None:
+    dry_run = subprocess.run(["make", "-n", "demo"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    steps = [line for line in dry_run.splitlines() if line.strip()]
+    positions = [
+        next(i for i, line in enumerate(steps) if needle in line)
+        for needle in ("docker compose up", "movie_rag.ingest --fixture", "movie_rag.retrieval --mode all")
+    ]
+    assert positions == sorted(positions)
+    with_query = subprocess.run(
+        ["make", "-n", "demo", "Q=a heist"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout
+    assert '"a heist"' in with_query

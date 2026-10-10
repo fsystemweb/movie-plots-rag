@@ -24,8 +24,8 @@ retrieval:
   default_mode: hybrid   # dense | sparse | hybrid
   top_k: 8
   prefetch_limit: 50
-  rrf_k: 60
   snippet_max_chars: 400
+  demo_query: a hotel telephone operator overhears a call arranging a death at midnight   # `make demo` sample query
 
 llm:
   base_url: https://api.tokenfactory.nebius.com/v1/
