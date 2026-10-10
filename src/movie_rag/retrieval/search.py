@@ -13,9 +13,9 @@
 Results are grouped by ``movie_id`` (``group_size=1``), so every film appears once, represented by its best chunk.
 Queries are embedded with the *query* embedders (``embed_dense_query`` / ``embed_sparse_query``).
 
-RRF parameters: qdrant-client 1.15.1 and Qdrant 1.15.x expose plain ``Fusion.RRF`` only (the server's constant is
-fixed); a configurable ``k`` arrives with ``RrfQuery`` in qdrant-client 1.16 / Qdrant 1.16, so there is no ``rrf_k``
-setting yet (see docs/BACKLOG.md).
+RRF parameters: plain ``Fusion.RRF`` uses the server's fixed constant (effective ``k = 2``). Qdrant server 1.15.4
+accepts a parametric ``rrf.k``, but qdrant-client 1.15.1 has no ``RrfQuery`` to send it (it arrives in client 1.16),
+so there is no ``rrf_k`` setting yet (see docs/adr/002-rrf-and-parameters.md and docs/BACKLOG.md).
 """
 
 from __future__ import annotations

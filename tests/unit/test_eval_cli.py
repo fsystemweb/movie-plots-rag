@@ -21,7 +21,7 @@ from fakes import ScriptedChatModel
 from movie_rag.config import Settings
 from movie_rag.eval import __main__ as cli
 from movie_rag.eval.__main__ import RESULTS_NAME, build_parser, format_summary, main, smoke_failures
-from movie_rag.eval.report import write_report
+from movie_rag.eval.report import README_BEGIN, README_END, render_readme_block, write_report
 
 pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
 
@@ -29,6 +29,9 @@ pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
 @pytest.fixture
 def reports_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("EVAL__REPORTS_DIR", str(tmp_path / "reports"))
+    readme = tmp_path / "README.md"  # never the real README: `report` rewrites its results block
+    readme.write_text(f"# Title\n\n{README_BEGIN}\nold\n{README_END}\n\nafter\n")
+    monkeypatch.setenv("EVAL__README_PATH", str(readme))
     return tmp_path / "reports"
 
 
@@ -61,7 +64,7 @@ def test_run_without_the_llm_half_does_not_mention_credentials(
 ) -> None:
     assert main(["run", "--mode", "sparse", "--no-llm"]) == 0
     out, err = capsys.readouterr()
-    assert "not run" in out.replace("not requested", "not run") and "pending" not in err and "pending" not in out
+    assert "not requested" in out and "pending" not in err and "pending" not in out
     assert canned.calls[0]["attempt_llm"] is False
 
 
@@ -100,6 +103,28 @@ def test_report_renders_the_page_from_the_json_files(reports_dir: Path, capsys: 
     page = (reports_dir / RESULTS_NAME).read_text()
     assert page.startswith("# Evaluation results") and "| dense |" in page and "| hybrid |" in page
     assert RESULTS_NAME in capsys.readouterr().err
+
+
+def test_report_rewrites_the_results_block_of_the_readme_and_nothing_else(
+    reports_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    reports = cached_reports()
+    for report in reports:
+        write_report(report, reports_dir)
+    assert main(["report"]) == 0
+    readme = (reports_dir.parent / "README.md").read_text()
+    assert readme == f"# Title\n\n{render_readme_block(reports)}\n\nafter\n"
+    assert "results block of" in capsys.readouterr().err
+
+
+def test_report_fails_clearly_when_the_readme_has_no_results_block(
+    reports_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for report in cached_reports():
+        write_report(report, reports_dir)
+    (reports_dir.parent / "README.md").write_text("# no markers here\n")
+    assert main(["report"]) == 1
+    assert "exactly one results block" in capsys.readouterr().err
 
 
 def test_report_without_json_files_says_to_run_the_evaluation_first(
