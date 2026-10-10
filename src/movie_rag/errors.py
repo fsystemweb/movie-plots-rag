@@ -37,3 +37,7 @@ class DownloadError(MovieRagError):
 
 class IndexingError(MovieRagError):
     """The vector index (Qdrant) is incompatible with the configuration or disagrees with what was written."""
+
+
+class RetrievalError(MovieRagError):
+    """A search request is invalid (empty query, bad ``top_k``, unknown mode)."""
