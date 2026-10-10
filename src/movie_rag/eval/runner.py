@@ -118,9 +118,9 @@ async def run_llm_half(
     ensure_judge_differs(settings)
     records = {r.movie_id: r for r in fixture_records(settings)}
     try:
+        scorers = deps.scorer_factory(settings, embedder)  # before the agent runs: a missing extra fails fast
         outcomes = await run_agent(settings, server, questions, mode, model=deps.chat_model)
         samples = build_samples(questions, outcomes, records)
-        scorers = deps.scorer_factory(settings, embedder)
         scored = await score_samples(samples, scorers, concurrency=settings.eval.ragas_concurrency)
     except MovieRagError:
         raise
@@ -158,10 +158,16 @@ async def evaluate(
     llm_questions_per_type: int | None = None,
     experiments: bool = True,
     deps: Dependencies | None = None,
+    subset: Callable[[Sequence[EvalQuestion]], Sequence[EvalQuestion]] | None = None,
 ) -> RunResult:
-    """Evaluate ``modes``. ``llm_questions_per_type`` limits the LLM half to a sample (smoke run)."""
+    """Evaluate ``modes``. ``llm_questions_per_type`` limits the LLM half to a sample (smoke run).
+
+    ``subset`` narrows the validated question set before anything runs (tests use it to stay fast; the CLI never does).
+    """
     deps = deps or Dependencies()
-    questions = load_eval_set(settings)
+    questions = list(load_eval_set(settings))
+    if subset is not None:
+        questions = list(subset(questions))
     client = connect(settings, deps.client, allow_local=deps.allow_local_qdrant)
     embedder = deps.embedder or FastEmbedder(settings.embeddings)
     index = ensure_fixture_indexed(settings, client, questions, embedder=embedder)

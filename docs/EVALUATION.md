@@ -40,16 +40,27 @@ is about. **Why abstention needs the LLM:** abstaining is the agent's behaviour 
 retrieval-only proxy would need a score threshold, a new tunable that is not in the spec and is not comparable across
 cosine, BM25 and RRF scores, so it is not computed; the report shows `pending credentials` instead.
 
-### Ties
+### Ties and repeatability
 
-Reciprocal rank fusion gives equal scores to a film that is first in one list and second in the other, and Qdrant
-returns tied films in a varying order, so a plain rank would change from run to run (observed: hybrid Hit@1 flipping
-between 0.867 and 0.900 on identical data). The metrics are therefore tie-aware: the best-placed gold film is taken to be
-at any position of its tie group with equal probability, and Hit@k and the reciprocal rank are the expectations
-(`metrics.rank_distribution`). Without ties the rank is exact. The per-question `rank` in the JSON is the position in
-the order returned, for inspection only.
+Reciprocal rank fusion gives equal scores to a film that is first in one list and second in the other, so a plain rank
+of a tied gold film is arbitrary (observed before this was handled: hybrid Hit@1 moving between 0.867 and 0.900 on
+identical data). The metrics are therefore tie-aware: the best-placed gold film is taken to be at any position of its
+tie group with equal probability, and Hit@k and the reciprocal rank are the expectations (`metrics.rank_distribution`).
+Without ties the rank is exact.
+
+`Retriever.search` and `find_similar` now list films with equal scores by `movie_id` (`retrieval.search.by_score_then_id`),
+so exactly tied output scores no longer depend on the server's order. **That does not make hybrid results exactly
+repeatable.** Repeating one hybrid query 15 times showed two different result sets (the films below the top, and their
+fused scores, changed): the server breaks ties *inside* each prefetch list (BM25 scores tie on near-identical plots)
+arbitrarily before fusing, and which tied films make the `top_k` cut is also its choice. A deterministic hybrid ranking
+would need client-side fusion with a stable tie-break. The tie-aware metrics are what keep the reported numbers stable:
+they were identical in every re-run we made. The per-question `rank` in the JSON is the position in the order
+returned, for inspection only.
 
 ### RAGAS
+
+ragas is the optional `eval` extra (`uv sync --extra eval`; `make setup` and CI install all extras). Without it the
+retrieval metrics still run, and asking for the LLM half stops before any model call with the command to install it.
 
 ragas 0.4.3 (`ragas.metrics.collections`: `Faithfulness`, `AnswerRelevancy` = response relevancy,
 `ContextPrecisionWithReference`, `ContextRecall`), judge via `llm_factory(llm.judge_model, client=AsyncOpenAI(base_url=llm.base_url))`,

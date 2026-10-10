@@ -8,8 +8,9 @@
   https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/ . The version in use is recorded in every report.
 * **Local embeddings.** Response relevancy needs an embedding model; the project's own FastEmbed dense model is used,
   so no second credential or paid endpoint is involved.
-* **Lazy.** ragas is imported only when a metric is built (``import ragas`` costs seconds and the retrieval half of the
-  evaluation does not need it). :func:`install_ragas_compat` first works around ragas 0.4.3 importing a module that
+* **Lazy and optional.** ragas is the ``eval`` extra and is imported only when a metric is built (``import ragas``
+  costs seconds and the retrieval half of the evaluation does not need it); :func:`require_ragas` explains how to
+  install it when it is missing. :func:`install_ragas_compat` first works around ragas 0.4.3 importing a module that
   ``langchain-community`` 0.4 removed (see its docstring).
 * **Failure isolation.** A metric that raises or returns NaN for one sample is recorded as failed for that sample; the
   other samples and metrics still count, and the report says how many were scored.
@@ -97,6 +98,23 @@ def install_ragas_compat() -> None:
         logger.debug("registered a stand-in for %s (ragas compatibility)", _VERTEXAI_MODULE)
 
 
+def require_ragas() -> None:
+    """Apply the compatibility step and make sure ragas (the optional ``eval`` extra) can be imported.
+
+    Raises :class:`EvalError` with the command to install it when it is missing.
+    """
+    install_ragas_compat()
+    try:
+        importlib.import_module("ragas")
+    except ModuleNotFoundError as exc:
+        if (exc.name or "").split(".")[0] != "ragas":
+            raise
+        raise EvalError(
+            "the RAGAS metrics need the optional `eval` extra, which is not installed: run `uv sync --extra eval` "
+            "(or `make setup`, which installs all extras)."
+        ) from exc
+
+
 def ensure_judge_differs(settings: Settings) -> None:
     """Raise :class:`EvalError` unless the judge model differs from the chat (generator) model."""
     judge, chat = settings.llm.judge_model.strip(), settings.llm.chat_model.strip()
@@ -111,7 +129,7 @@ def make_judge(settings: Settings) -> Any:
     """The RAGAS judge LLM over the Nebius endpoint. Needs ``NEBIUS_API_KEY`` (``MissingCredentialError`` otherwise)."""
     ensure_judge_differs(settings)
     api_key = settings.require_nebius_api_key()
-    install_ragas_compat()
+    require_ragas()
     from openai import AsyncOpenAI
     from ragas.llms import llm_factory
 
@@ -123,7 +141,7 @@ def make_judge(settings: Settings) -> Any:
 
 def make_embeddings(embedder: Embedder) -> Any:
     """A RAGAS embedding model backed by the project's own (local) dense embedder."""
-    install_ragas_compat()
+    require_ragas()
     from ragas.embeddings.base import BaseRagasEmbedding
 
     class LocalDenseEmbeddings(BaseRagasEmbedding):
@@ -138,7 +156,7 @@ def make_embeddings(embedder: Embedder) -> Any:
 
 def build_scorers(llm: Any, embeddings: Any, *, strictness: int) -> dict[str, Scorer]:
     """The four metrics as ``{name: async scorer(sample)}`` (``llm`` and ``embeddings`` from the factories above)."""
-    install_ragas_compat()
+    require_ragas()
     from ragas.metrics.collections import AnswerRelevancy, ContextPrecisionWithReference, ContextRecall, Faithfulness
 
     faithfulness = Faithfulness(llm=llm)

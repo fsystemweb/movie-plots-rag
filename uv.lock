@@ -1482,8 +1482,12 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "qdrant-client" },
-    { name = "ragas" },
     { name = "streamlit" },
+]
+
+[package.optional-dependencies]
+eval = [
+    { name = "ragas" },
 ]
 
 [package.dev-dependencies]
@@ -1511,9 +1515,10 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "qdrant-client", specifier = ">=1.15,<1.16" },
-    { name = "ragas", specifier = ">=0.4.3,<0.5" },
+    { name = "ragas", marker = "extra == 'eval'", specifier = ">=0.4.3,<0.5" },
     { name = "streamlit", specifier = ">=1.65.0" },
 ]
+provides-extras = ["eval"]
 
 [package.metadata.requires-dev]
 dev = [

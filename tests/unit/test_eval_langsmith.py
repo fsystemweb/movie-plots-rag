@@ -47,11 +47,18 @@ def test_without_a_key_nothing_is_called_and_the_result_says_so(make_settings: C
 
 def test_the_target_returns_the_ranking_computed_for_the_examples_question() -> None:
     target = make_target(RESULTS)
-    assert target({"question": QUESTION.question, "filters": {}}) == {
+    assert target({"question_id": QUESTION.id, "question": QUESTION.question, "filters": {}}) == {
         "ranked_movie_ids": ["x", "g"],
         "scores": [0.5, 0.5],
         "latency_ms": 12.5,
     }
+
+
+def test_two_questions_with_the_same_text_do_not_collide() -> None:
+    twin = EvalQuestion(id="fuzzy-02", type="fuzzy_plot", question=QUESTION.question, gold_movie_ids=["h"])
+    target = make_target([result(QUESTION, ["x", "g"], [0.5, 0.5]), result(twin, ["h"], [0.9])])
+    assert target({"question_id": "fuzzy-02", "question": twin.question})["ranked_movie_ids"] == ["h"]
+    assert target({"question_id": "fuzzy-01", "question": QUESTION.question})["ranked_movie_ids"] == ["x", "g"]
 
 
 def test_evaluators_score_hit_at_k_and_reciprocal_rank_with_ties() -> None:

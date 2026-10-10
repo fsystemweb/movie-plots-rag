@@ -2,8 +2,7 @@
 
 Without ``QDRANT_URL`` the in-process engine is used for dense and sparse only (it cannot do hybrid search, see
 tests/integration/test_retrieval_qdrant.py); with it, all three modes run on a throw-away collection and the numbers
-must be reproducible: Qdrant returns tied reciprocal-rank-fusion scores in varying order, which the tie-aware metrics
-have to absorb.
+must be reproducible (hybrid rankings below the top are not, the tie-aware metrics absorb that).
 """
 
 from __future__ import annotations
@@ -51,33 +50,43 @@ def evaluate(settings: Settings, client: QdrantClient) -> list[EvalReport]:
     return run(settings, MODES, attempt_llm=False, experiments=False, deps=deps).reports
 
 
-def test_the_evaluation_ingests_the_fixture_and_every_mode_clears_the_smoke_floor(
-    settings: Settings, client: QdrantClient
-) -> None:
+@pytest.fixture(scope="module")
+def first_run(settings: Settings, client: QdrantClient) -> list[EvalReport]:
+    """The first evaluation on an empty throw-away collection (it ingests the fixture); shared by the tests below."""
     if QDRANT_URL:
         connect(settings, client)  # a real service is accepted
-    reports = evaluate(settings, client)
-    assert reports[0].index.fixture_ingested_now is True
-    for report in reports:
+    return evaluate(settings, client)
+
+
+def test_the_evaluation_ingests_the_fixture_and_every_mode_clears_the_smoke_floor(
+    settings: Settings, first_run: list[EvalReport]
+) -> None:
+    assert first_run[0].index.fixture_ingested_now is True
+    for report in first_run:
         assert report.retrieval.overall.n == 30
         assert report.retrieval.overall.mrr is not None
         assert report.retrieval.overall.mrr >= settings.eval.smoke_min_mrr, report.mode
         assert report.retrieval.overall.hit_at_k[8] is not None and report.retrieval.overall.hit_at_k[8] >= 0.8
 
 
-def test_a_second_run_reuses_the_index_and_gives_the_same_numbers(settings: Settings, client: QdrantClient) -> None:
-    first = evaluate(settings, client)
+def test_a_second_run_reuses_the_index_and_gives_the_same_numbers(
+    settings: Settings, client: QdrantClient, first_run: list[EvalReport]
+) -> None:
     second = evaluate(settings, client)
     assert second[0].index.fixture_ingested_now is False
-    for a, b in zip(first, second, strict=True):
+    for a, b in zip(first_run, second, strict=True):
         assert a.retrieval.overall == b.retrieval.overall, a.mode
         assert a.retrieval.by_type == b.retrieval.by_type, a.mode
+        # not asserted: the lists themselves. Below the top, hybrid results can differ between identical calls (ties
+        # inside the BM25 and dense lists are broken arbitrarily by the server before fusion); the metrics absorb it.
 
 
-def test_filtered_questions_stay_inside_their_filters_in_every_mode(settings: Settings, client: QdrantClient) -> None:
+def test_filtered_questions_stay_inside_their_filters_in_every_mode(
+    settings: Settings, first_run: list[EvalReport]
+) -> None:
     records = {r.movie_id: r for r in fixture_records(settings)}
     filters = {q.id: q.filters for q in load_eval_set(settings) if q.type == "filtered"}
-    for report in evaluate(settings, client):
+    for report in first_run:
         for found in report.retrieval.per_question:
             if found.question_id in filters:
                 assert found.ranked_movie_ids, (report.mode, found.question_id)

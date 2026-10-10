@@ -41,7 +41,10 @@ def test_qdrant_tag_matches_between_compose_and_ci() -> None:
 
 
 def _dry_run(*args: str) -> str:
-    return subprocess.run(["make", "-n", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    """``make -n`` output. ``--no-print-directory`` keeps "Entering directory" lines out when pytest runs under make."""
+    return subprocess.run(
+        ["make", "--no-print-directory", "-n", *args], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout
 
 
 def test_make_eval_forwards_the_mode_and_the_llm_switch() -> None:

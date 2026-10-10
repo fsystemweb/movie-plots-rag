@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import importlib.metadata
 import math
+import os
 import sys
 from collections.abc import Callable, Iterator
 from typing import Any
@@ -24,6 +25,7 @@ from movie_rag.eval.ragas_judge import (
     make_embeddings,
     make_judge,
     ragas_version,
+    require_ragas,
     score_samples,
     summarise_scores,
 )
@@ -66,9 +68,6 @@ def test_ragas_imports_after_the_compat_step_and_telemetry_is_off(monkeypatch: p
     import ragas
 
     assert ragas.__version__ == ragas_version()
-    assert sys.modules  # keep the import observable
-    import os
-
     assert os.environ["RAGAS_DO_NOT_TRACK"] == "true"
 
 
@@ -97,6 +96,39 @@ def test_the_ragas_version_is_read_from_the_package_metadata(monkeypatch: pytest
     assert ragas_version().startswith("0.4")
     monkeypatch.setattr(importlib.metadata, "version", _raise_not_found)
     assert ragas_version() == "not installed"
+
+
+def test_a_missing_eval_extra_is_explained_with_the_command_that_installs_it(
+    monkeypatch: pytest.MonkeyPatch, settings: Settings
+) -> None:
+    def no_ragas(name: str, package: str | None = None) -> Any:
+        raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+
+    real_import = importlib.import_module
+    monkeypatch.setattr(
+        importlib, "import_module", lambda n, p=None: no_ragas(n, p) if n == "ragas" else real_import(n, p)
+    )
+    with pytest.raises(EvalError, match=r"optional `eval` extra.*uv sync --extra eval"):
+        require_ragas()
+    with pytest.raises(EvalError, match="uv sync --extra eval"):
+        make_judge(settings)
+    with pytest.raises(EvalError, match="uv sync --extra eval"):
+        make_embeddings(FakeEmbedder())
+    with pytest.raises(EvalError, match="uv sync --extra eval"):
+        build_scorers(object(), object(), strictness=1)
+
+
+def test_a_different_missing_module_is_not_mistaken_for_the_missing_extra(monkeypatch: pytest.MonkeyPatch) -> None:
+    real_import = importlib.import_module
+
+    def broken(name: str, package: str | None = None) -> Any:
+        if name == "ragas":
+            raise ModuleNotFoundError("No module named 'scipy'", name="scipy")
+        return real_import(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", broken)
+    with pytest.raises(ModuleNotFoundError, match="scipy"):
+        require_ragas()
 
 
 def _raise_not_found(name: str) -> str:

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from eval_support import retrieval_only
-from movie_rag.config import Settings, load_settings
+from eval_support import cached_reports
+from movie_rag.config import Settings
 from movie_rag.errors import EvalError
 from movie_rag.eval.agent_eval import AgentMetrics
 from movie_rag.eval.metrics import AbstentionMetrics, Summary
@@ -29,7 +29,7 @@ pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
 
 @pytest.fixture(scope="module")
 def reports() -> list[EvalReport]:
-    return retrieval_only(load_settings(env_file=None), ("dense", "sparse", "hybrid")).reports
+    return cached_reports()
 
 
 @pytest.fixture
@@ -126,6 +126,28 @@ def test_the_page_says_the_fixture_favours_bm25_and_cannot_show_hybrid_gains(
     assert "The fixture favours BM25" in text
     assert "cannot show the advantage" in text and "hybrid" in text
     assert "On the fuzzy plot questions Hit@1 is dense" in text
+
+
+def test_the_size_of_one_question_is_derived_from_the_data(reports: list[EvalReport]) -> None:
+    n = reports[0].retrieval.overall.n
+    assert n == 6  # the cached evaluation uses two questions of each type
+    assert f"With {n} answerable questions one question is {100 / n:.1f} percentage points" in render_markdown(reports)
+    thirty = reports[0].model_copy(
+        update={
+            "retrieval": reports[0].retrieval.model_copy(
+                update={"overall": reports[0].retrieval.overall.model_copy(update={"n": 30})}
+            )
+        }
+    )
+    assert "With 30 answerable questions one question is 3.3 percentage points" in render_markdown([thirty])
+
+
+def test_the_page_explains_hybrid_repeatability_and_how_ties_are_scored(
+    reports: list[EvalReport],
+) -> None:
+    text = render_markdown(reports)
+    assert "Equal final scores are listed by `movie_id`" in text
+    assert "not exactly repeatable" in text and "expectation over all orders of a tie group" in text
 
 
 def test_retrieval_numbers_in_the_page_are_the_numbers_of_the_json(reports: list[EvalReport]) -> None:

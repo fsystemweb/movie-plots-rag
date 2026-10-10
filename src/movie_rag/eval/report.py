@@ -161,6 +161,7 @@ def render_markdown(reports: Sequence[EvalReport]) -> str:
         raise EvalError("nothing to render: no evaluation reports")
     ks = reports[0].retrieval.k_values
     first = reports[0]
+    answerable = max(first.retrieval.overall.n, 1)
     out: list[str] = [
         "# Evaluation results",
         "",
@@ -177,9 +178,10 @@ def render_markdown(reports: Sequence[EvalReport]) -> str:
         "questions, thousands of competing candidates). Do not read the mode ranking below as a ranking on the real "
         "dataset. " + _fuzzy_sentence(reports),
         "",
-        "With 30 answerable questions one question is 3.3 percentage points: differences of one or two questions are "
-        "noise. The gold film ids belong to the fixture, so the same questions cannot be reused on the full dataset "
-        "(generate a new set with `python -m movie_rag.eval.generate`, which needs `NEBIUS_API_KEY`).",
+        f"With {answerable} answerable questions one question is {100 / answerable:.1f} percentage points: "
+        "differences of one or two questions are noise. The gold film ids belong to the fixture, so the same "
+        "questions cannot be reused on the full dataset (generate a new set with `python -m movie_rag.eval.generate`, "
+        "which needs `NEBIUS_API_KEY`).",
         "",
         "## Run metadata",
         "",
@@ -208,9 +210,10 @@ def render_markdown(reports: Sequence[EvalReport]) -> str:
         "Hit@k: the gold film is among the top k films. MRR: mean of 1/rank of the gold film (0 if not retrieved). "
         "Both are averaged over the questions that have a gold film (fuzzy plot, exact entity, filtered); the "
         "unanswerable ones are measured by abstention. The ranking is `search_movies` called through the project's "
-        "MCP server. Films with equal scores (common in hybrid mode: reciprocal rank fusion ties a film that is first "
-        "in one list and second in the other) are in no defined order, so Hit@k and MRR are the expectation over that "
-        "order, which keeps the numbers reproducible (`docs/EVALUATION.md`).",
+        "MCP server. Hybrid results are not exactly repeatable: Qdrant breaks ties inside each list (BM25 scores "
+        "tie) arbitrarily before fusion, and reciprocal rank fusion itself ties a film that is first in one list and "
+        "second in the other. Equal final scores are listed by `movie_id`; Hit@k and MRR are the expectation over all "
+        "orders of a tie group, which is what kept them identical across re-runs (`docs/EVALUATION.md`).",
         "",
         _table(
             ["Mode", "n", *(f"Hit@{k}" for k in ks), "MRR", "latency p50 (ms)", "latency p95 (ms)"],

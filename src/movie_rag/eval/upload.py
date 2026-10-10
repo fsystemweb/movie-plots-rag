@@ -3,7 +3,7 @@
 Without ``LANGSMITH_API_KEY`` the command prints a skip notice and exits 0 (a missing key is not an error, see
 docs/CREDENTIALS.md). With a key it creates the dataset ``eval.dataset_name`` and one example per question:
 
-* inputs: ``question`` and the ``filters`` the question carries;
+* inputs: ``question_id`` (what experiment targets key on), ``question`` and the ``filters`` the question carries;
 * outputs: ``gold_movie_ids`` and ``expect_abstention`` (true for unanswerable questions);
 * metadata: ``question_id``, ``type`` and, for unanswerable questions, ``absent_title``.
 
@@ -57,7 +57,11 @@ def to_example(question: EvalQuestion) -> dict[str, Any]:
     if question.absent_title is not None:
         metadata["absent_title"] = question.absent_title
     return {
-        "inputs": {"question": question.question, "filters": question.filters.model_dump(exclude_none=True)},
+        "inputs": {
+            "question_id": question.id,
+            "question": question.question,
+            "filters": question.filters.model_dump(exclude_none=True),
+        },
         "outputs": {"gold_movie_ids": question.gold_movie_ids, "expect_abstention": question.type == "unanswerable"},
         "metadata": metadata,
     }

@@ -39,11 +39,11 @@ class ExperimentResult(BaseModel):
 
 
 def make_target(results: Sequence[QuestionRetrieval]) -> Callable[[dict[str, Any]], dict[str, Any]]:
-    """The experiment target: looks up the ranking computed for ``inputs["question"]``."""
-    by_question: Mapping[str, QuestionRetrieval] = {r.question: r for r in results}
+    """The experiment target: looks up the ranking computed for ``inputs["question_id"]``."""
+    by_id: Mapping[str, QuestionRetrieval] = {r.question_id: r for r in results}
 
     def target(inputs: dict[str, Any]) -> dict[str, Any]:
-        found = by_question[inputs["question"]]
+        found = by_id[inputs["question_id"]]
         return {"ranked_movie_ids": found.ranked_movie_ids, "scores": found.scores, "latency_ms": found.latency_ms}
 
     return target

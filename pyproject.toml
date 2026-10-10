@@ -16,12 +16,15 @@ dependencies = [
     "pydantic-settings>=2.15.0",
     "pyyaml>=6.0.3",
     "qdrant-client>=1.15,<1.16",
-    "ragas>=0.4.3,<0.5",
     "streamlit>=1.65.0",
 ]
 
 [project.optional-dependencies]
-# Later PRs add their runtime extras here; CI installs with `--all-extras --dev`.
+# Optional runtime extras; CI installs with `--all-extras --dev`, the MCP server image with neither.
+# eval: the RAGAS half of `make eval` (imported lazily; without it the retrieval metrics still run).
+eval = [
+    "ragas>=0.4.3,<0.5",
+]
 
 [dependency-groups]
 dev = [
