@@ -20,7 +20,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Later PRs add their runtime extras here; CI installs with `--all-extras --dev`.
+# Optional runtime extras; CI installs with `--all-extras --dev`, the MCP server image with neither.
+# eval: the RAGAS half of `make eval` (imported lazily; without it the retrieval metrics still run).
+eval = [
+    "ragas>=0.4.3,<0.5",
+]
 
 [dependency-groups]
 dev = [

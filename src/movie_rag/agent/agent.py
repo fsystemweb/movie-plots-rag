@@ -22,7 +22,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langchain_mcp_adapters.interceptors import MCPToolCallRequest
+from langchain_mcp_adapters.interceptors import MCPToolCallRequest, ToolCallInterceptor
 from langchain_openai import ChatOpenAI
 from langgraph.errors import GraphRecursionError
 
@@ -73,17 +73,22 @@ def is_connection_failure(error: BaseException) -> bool:
     return any(isinstance(e, httpx.TransportError | httpx.HTTPStatusError | OSError) for e in _chain(error))
 
 
-async def load_mcp_tools(settings: Settings, mode: RetrievalMode | None = None) -> list[BaseTool]:
-    """The MCP server's tools as LangChain tools. ``mode`` forces the retrieval mode of every ``search_movies`` call.
-
-    Raises :class:`McpUnavailableError` when the server cannot be reached.
-    """
+def mode_interceptor(mode: RetrievalMode | None) -> ToolCallInterceptor:
+    """A tool interceptor that forces the retrieval mode of every ``search_movies`` call (``None``: leave it alone)."""
 
     async def force_mode(request: MCPToolCallRequest, handler: ToolHandler) -> Any:
         if mode is not None and request.name == SEARCH_TOOL:
             request = request.override(args={**request.args, "mode": mode})
         return await handler(request)
 
+    return force_mode
+
+
+async def load_mcp_tools(settings: Settings, mode: RetrievalMode | None = None) -> list[BaseTool]:
+    """The MCP server's tools as LangChain tools. ``mode`` forces the retrieval mode of every ``search_movies`` call.
+
+    Raises :class:`McpUnavailableError` when the server cannot be reached.
+    """
     client = MultiServerMCPClient(
         {
             SERVER_KEY: {
@@ -92,7 +97,7 @@ async def load_mcp_tools(settings: Settings, mode: RetrievalMode | None = None) 
                 "timeout": settings.agent.mcp_timeout_s,
             }
         },
-        tool_interceptors=[force_mode],
+        tool_interceptors=[mode_interceptor(mode)],
     )
     try:
         return list(await client.get_tools())

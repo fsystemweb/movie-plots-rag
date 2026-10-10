@@ -4,7 +4,7 @@ A movie-discovery RAG agent that answers fuzzy plot questions ("a heist movie wh
 getaway driver") with cited results. Hybrid retrieval (dense + BM25 with RRF) over Qdrant, served through an MCP
 server, consumed by a LangChain agent, with a Streamlit test page and a RAGAS evaluation harness.
 
-> Status: scaffold. Most `make` targets print `not implemented yet (PR-NN)` until the PR that owns them lands.
+> Status: under construction. A `make` target that is not built yet prints `not implemented yet (PR-NN)`.
 > See [`docs/PR_TRACKER.md`](docs/PR_TRACKER.md).
 
 ## Quickstart
@@ -137,6 +137,19 @@ The sidebar has the mode, `top_k`, a year range, genre and origin (filled from t
 - **Compare modes** runs one query in dense, sparse and hybrid mode side by side (retrieval only).
 - If the MCP server is not running, every action says so, naming `mcp.url` and `make serve`.
 
+## Evaluation
+
+```bash
+make up && make eval        # Hit@k, MRR, latency for dense, sparse and hybrid on the fixture -> reports/eval_<mode>.json
+make report                 # reports/EVAL_RESULTS.md, rendered from those JSON files only
+make eval-smoke             # what CI runs: the same retrieval metrics, nothing written
+```
+
+Details, the metric definitions (including how score ties are handled) and why the fixture cannot show hybrid
+retrieval's advantage are in [`docs/EVALUATION.md`](docs/EVALUATION.md); the numbers are in
+[`reports/EVAL_RESULTS.md`](reports/EVAL_RESULTS.md). LLM-backed numbers (RAGAS, agent abstention) show
+"pending credentials" until `NEBIUS_API_KEY` exists.
+
 ## Make targets
 
 | Target | What it does | Status |
@@ -146,7 +159,7 @@ The sidebar has the mode, `top_k`, a year range, genre and origin (filled from t
 | `test` | full suite (including `tests/hooks`) with `--cov-branch --cov-fail-under=80` | ready |
 | `cov` | test run plus an HTML coverage report | ready |
 | `check` | lint + format check + typecheck + test | ready |
-| `ci` | `check` + gitleaks (if installed) + retrieval smoke eval (stub until PR-09); writes `.claude/state/ci-<NN>.ok` | ready (smoke eval: PR-09) |
+| `ci` | `check` + gitleaks (if installed) + retrieval smoke eval; writes `.claude/state/ci-<NN>.ok` | ready |
 | `up` / `down` | start / stop Qdrant via docker compose | ready |
 | `download` | fetch the Kaggle CSV into `data/raw/`; without credentials prints what to set and exits 2 (`FORCE=1` re-downloads) | ready |
 | `doctor` | report on Docker, Qdrant, dataset, credentials and model ids with next steps; always exits 0 | ready |
@@ -155,7 +168,9 @@ The sidebar has the mode, `top_k`, a year range, genre and origin (filled from t
 | `serve` | MCP server over HTTP at `mcp.url` (`STDIO=1` for stdio, `DOCKER=1` for the compose service with healthcheck) | ready |
 | `ask` | CLI agent: `make ask Q="..."` (`MODE=dense\|sparse\|hybrid`, `JSON=1`); needs `make serve` and `NEBIUS_API_KEY` (without it: prints the hint, exits 2) | ready |
 | `ui` | Streamlit test page (`PORT=`, `HEADLESS=1`); needs `make serve`; the agent half needs `NEBIUS_API_KEY`, "Retrieval only" does not | ready |
-| `eval`, `eval-smoke`, `report` | evaluation harness (`eval-smoke LLM=1` adds RAGAS) | PR-09 |
+| `eval` | Hit@k / MRR / latency per mode into `reports/eval_<mode>.json` (`MODE=dense\|sparse\|hybrid`, default all); agent + RAGAS half when `NEBIUS_API_KEY` is set (`LLM=0` skips it); needs `make up` | ready |
+| `eval-smoke` | the retrieval half for all modes, nothing written, fails below `eval.smoke_min_mrr`; `LLM=1` adds a small agent + RAGAS sample (skipped without a key) | ready |
+| `report` | render `reports/EVAL_RESULTS.md` from the `eval_<mode>.json` files | ready |
 
 ## Built autonomously
 

@@ -310,6 +310,39 @@ def test_hybrid_search_parses_groups_into_one_hit_per_film(settings: Settings) -
     assert client.query_points_groups.call_args.kwargs["limit"] == 2
 
 
+@pytest.mark.parametrize("server_order", [["b", "c", "a", "d"], ["d", "a", "c", "b"], ["c", "b", "d", "a"]])
+def test_tied_scores_come_back_in_movie_id_order_whatever_order_the_server_used(
+    settings: Settings, server_order: list[str]
+) -> None:
+    """RRF ties (a film first in one list and second in the other) arrive in a varying order; the list must not."""
+    scores = {"a": 0.5, "b": 0.5, "c": 0.5, "d": 0.9}
+
+    def point(movie_id: str) -> m.ScoredPoint:
+        payload = {"movie_id": movie_id, "title": movie_id, "chunk_idx": 0, "text": "plot", "release_year": 2000}
+        return m.ScoredPoint(id=movie_id, version=1, score=scores[movie_id], payload=payload)
+
+    client = MagicMock(spec=QdrantClient)
+    client.query_points_groups.return_value = m.GroupsResult(
+        groups=[m.PointGroup(id=i, hits=[point(i)]) for i in server_order]
+    )
+    hits = Retriever(settings, client=client, embedder=FakeEmbedder()).search("q", mode="hybrid", top_k=4)
+    assert [h.movie_id for h in hits] == ["d", "a", "b", "c"]  # best score first, then by movie_id
+
+
+def test_find_similar_orders_ties_by_movie_id_too(settings: Settings) -> None:
+    def point(movie_id: str) -> m.ScoredPoint:
+        payload = {"movie_id": movie_id, "title": movie_id, "chunk_idx": 0, "text": "plot"}
+        return m.ScoredPoint(id=movie_id, version=1, score=0.7, payload=payload)
+
+    client = MagicMock(spec=QdrantClient)
+    client.retrieve.return_value = [m.Record(id="anchor", payload={})]
+    client.query_points_groups.return_value = m.GroupsResult(
+        groups=[m.PointGroup(id=i, hits=[point(i)]) for i in ("z", "m", "a")]
+    )
+    hits = Retriever(settings, client=client, embedder=FakeEmbedder()).find_similar("x-1999-1", top_k=3)
+    assert [h.movie_id for h in hits] == ["a", "m", "z"]
+
+
 def test_hybrid_sends_the_filter_in_both_prefetches_to_the_client(settings: Settings) -> None:
     client = MagicMock(spec=QdrantClient)
     client.query_points_groups.return_value = m.GroupsResult(groups=[])

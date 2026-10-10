@@ -40,13 +40,40 @@ def test_qdrant_tag_matches_between_compose_and_ci() -> None:
     assert not image.endswith(":latest")
 
 
-@pytest.mark.parametrize(
-    ("target", "pr"),
-    [("eval-smoke", "PR-09")],
-)
-def test_unimplemented_make_targets_are_stubs(target: str, pr: str) -> None:
-    out = subprocess.run(["make", "-s", target], cwd=ROOT, capture_output=True, text=True, check=True).stdout
-    assert out.strip() == f"not implemented yet ({pr})"
+def _dry_run(*args: str) -> str:
+    """``make -n`` output. ``--no-print-directory`` keeps "Entering directory" lines out when pytest runs under make."""
+    return subprocess.run(
+        ["make", "--no-print-directory", "-n", *args], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout
+
+
+def test_make_eval_forwards_the_mode_and_the_llm_switch() -> None:
+    assert "python -m movie_rag.eval run --mode hybrid" in _dry_run("eval", "MODE=hybrid")
+    plain = _dry_run("eval")
+    assert "python -m movie_rag.eval run" in plain and "--mode" not in plain and "--no-llm" not in plain
+    assert "--no-llm" in _dry_run("eval", "LLM=0")
+
+
+def test_make_eval_smoke_has_exactly_the_two_forms_ci_calls() -> None:
+    assert _dry_run("eval-smoke").strip().endswith("python -m movie_rag.eval smoke")
+    assert "python -m movie_rag.eval smoke --llm" in _dry_run("eval-smoke", "LLM=1")
+
+
+def test_make_report_renders_the_results_page() -> None:
+    assert "python -m movie_rag.eval report" in _dry_run("report")
+
+
+def test_make_does_not_export_llm_to_the_environment() -> None:
+    """``LLM=1`` in the environment would be parsed as the whole ``llm:`` settings section."""
+    out = subprocess.run(
+        ["make", "-s", "-f", "-", "show", "LLM=1"],
+        input=f'include {ROOT / "Makefile"}\nshow:\n\t@echo "[$$LLM]"\n',
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert out.strip() == "[]"
 
 
 def test_make_ui_runs_streamlit_on_the_page_and_forwards_its_options() -> None:

@@ -76,6 +76,7 @@ def test_example_shapes(questions: list[EvalQuestion]) -> None:
     assert filtered["outputs"] == {"gold_movie_ids": ["monsoon-heist-2005-280"], "expect_abstention": False}
     fuzzy = by_type["fuzzy_plot"]
     assert fuzzy["inputs"]["filters"] == {}
+    assert fuzzy["inputs"]["question_id"] == "fuzzy-01"  # experiment targets key on the id, not the text
     assert fuzzy["metadata"] == {"question_id": "fuzzy-01", "type": "fuzzy_plot"}
     unanswerable = by_type["unanswerable"]
     assert unanswerable["outputs"] == {"gold_movie_ids": [], "expect_abstention": True}

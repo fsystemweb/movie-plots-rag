@@ -1,0 +1,1133 @@
+{
+  "schema_version": 1,
+  "mode": "hybrid",
+  "generated_at": "2026-10-10T13:41:17+00:00",
+  "git_sha": "6ffa441",
+  "config_hash": "7fc61e900353",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "sparse_model": "Qdrant/bm25",
+  "question_set": {
+    "path": "src/movie_rag/eval/data/questions_v1.jsonl",
+    "n": 40,
+    "per_type": {
+      "exact_entity": 10,
+      "filtered": 10,
+      "fuzzy_plot": 10,
+      "unanswerable": 10
+    }
+  },
+  "index": {
+    "collection": "movie_plots",
+    "points": 304,
+    "fixture_ingested_now": false
+  },
+  "retrieval": {
+    "k_values": [
+      1,
+      3,
+      5,
+      8
+    ],
+    "depth": 8,
+    "overall": {
+      "n": 30,
+      "hit_at_k": {
+        "1": 0.8833333333333333,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "mrr": 0.9416666666666667
+    },
+    "by_type": {
+      "exact_entity": {
+        "n": 10,
+        "hit_at_k": {
+          "1": 0.7,
+          "3": 1.0,
+          "5": 1.0,
+          "8": 1.0
+        },
+        "mrr": 0.85
+      },
+      "filtered": {
+        "n": 10,
+        "hit_at_k": {
+          "1": 1.0,
+          "3": 1.0,
+          "5": 1.0,
+          "8": 1.0
+        },
+        "mrr": 1.0
+      },
+      "fuzzy_plot": {
+        "n": 10,
+        "hit_at_k": {
+          "1": 0.95,
+          "3": 1.0,
+          "5": 1.0,
+          "8": 1.0
+        },
+        "mrr": 0.975
+      }
+    },
+    "latency_ms": {
+      "n": 40,
+      "p50": 34.165000000000006,
+      "p95": 69.4255,
+      "mean": 40.8975
+    },
+    "per_question": [
+      {
+        "question_id": "fuzzy-01",
+        "type": "fuzzy_plot",
+        "question": "A doctor takes over the practice of a vanished colleague in an isolated Yorkshire hamlet, where a chime from the steeple always foretells a death, and finds he had sketched one more chime that has never sounded.",
+        "gold_movie_ids": [
+          "the-ninth-bell-of-varnholt-1931-14"
+        ],
+        "ranked_movie_ids": [
+          "the-midnight-patient-1961-96",
+          "the-ninth-bell-of-varnholt-1931-14",
+          "the-thirteenth-chime-1996-116",
+          "the-smiling-patient-1947-125",
+          "the-dead-soldier-s-confession-1989-204",
+          "the-forged-prescription-2012-58",
+          "the-ledger-of-deaths-2015-166",
+          "the-wrong-coffin-1961-146"
+        ],
+        "scores": [
+          0.625,
+          0.625,
+          0.5833334,
+          0.5,
+          0.27631578,
+          0.26666668,
+          0.2,
+          0.2
+        ],
+        "rank": 2,
+        "latency_ms": 77.41
+      },
+      {
+        "question_id": "fuzzy-02",
+        "type": "fuzzy_plot",
+        "question": "A private eye comes round on a rainy waterfront with a grazed skull and no idea of his own name, and starts to fear that the man he has been hired to track down is himself.",
+        "gold_movie_ids": [
+          "the-forgetting-hour-1947-282"
+        ],
+        "ranked_movie_ids": [
+          "the-forgetting-hour-1947-282",
+          "the-coat-with-the-pistol-1955-106",
+          "the-permanent-passenger-1967-222",
+          "the-woman-s-shadow-1967-169",
+          "atlas-of-lost-birthdays-2015-248",
+          "rails-beneath-the-snow-1963-277",
+          "salvage-rights-1981-22",
+          "the-unexplained-figure-in-the-photographs-1954-255"
+        ],
+        "scores": [
+          0.6666667,
+          0.5,
+          0.5,
+          0.5,
+          0.33333334,
+          0.33333334,
+          0.33333334,
+          0.33333334
+        ],
+        "rank": 1,
+        "latency_ms": 71.24
+      },
+      {
+        "question_id": "fuzzy-03",
+        "type": "fuzzy_plot",
+        "question": "In a drought-stricken outback town, a teenage mechanic keeps tall transparent farming towers running that pull moisture out of the night air, until she learns the water is secretly supplied by the mining firm whose blasting is damaging the ground.",
+        "gold_movie_ids": [
+          "glass-harvest-2013-198"
+        ],
+        "ranked_movie_ids": [
+          "glass-harvest-2013-198",
+          "kerosene-summer-1975-49",
+          "the-climbing-hydroponic-vines-1986-28",
+          "the-water-stained-poetry-book-1987-27",
+          "the-last-water-well-1998-262",
+          "the-minefield-garden-1976-144",
+          "salvage-rights-1981-22",
+          "the-railroad-survey-stakes-1968-102"
+        ],
+        "scores": [
+          1.0,
+          0.5833334,
+          0.5,
+          0.5,
+          0.4,
+          0.3703704,
+          0.33333334,
+          0.33333334
+        ],
+        "rank": 1,
+        "latency_ms": 66.08
+      },
+      {
+        "question_id": "fuzzy-04",
+        "type": "fuzzy_plot",
+        "question": "A lonely accountant takes a late train on a stormy night and reaches a concealed city where every anniversary of birth that nobody marked ends up archived, and has to persuade strangers to throw her parties to get her years back.",
+        "gold_movie_ids": [
+          "atlas-of-lost-birthdays-2015-248"
+        ],
+        "ranked_movie_ids": [
+          "atlas-of-lost-birthdays-2015-248",
+          "the-seagull-family-pier-1986-137",
+          "the-ticket-to-nowhere-1950-226",
+          "the-sealed-border-envelope-1987-157",
+          "the-suit-lining-account-numbers-1997-212",
+          "seven-days-of-rain-in-tsarskoye-1927-253",
+          "the-button-collection-1979-167",
+          "the-3-03-transaction-2002-85"
+        ],
+        "scores": [
+          1.0,
+          0.33333334,
+          0.33333334,
+          0.25,
+          0.25,
+          0.2,
+          0.2,
+          0.1936937
+        ],
+        "rank": 1,
+        "latency_ms": 66.48
+      },
+      {
+        "question_id": "fuzzy-05",
+        "type": "fuzzy_plot",
+        "question": "An engineer on a vessel carrying settlers across a desert planet finds that the reprocessed drinking supply carries the faint patterns of a tongue nobody aboard speaks.",
+        "gold_movie_ids": [
+          "the-recycled-water-signal-1993-8"
+        ],
+        "ranked_movie_ids": [
+          "the-recycled-water-signal-1993-8",
+          "glass-harvest-2013-198",
+          "salvage-rights-1981-22",
+          "the-permanent-passenger-1967-222",
+          "the-aliens-questions-1984-34",
+          "the-letter-to-an-unknown-planet-1984-217",
+          "the-weightless-passenger-1992-154",
+          "the-singing-signal-1988-17"
+        ],
+        "scores": [
+          1.0,
+          0.5,
+          0.5,
+          0.4047619,
+          0.325,
+          0.26785713,
+          0.22702703,
+          0.16666667
+        ],
+        "rank": 1,
+        "latency_ms": 34.2
+      },
+      {
+        "question_id": "fuzzy-06",
+        "type": "fuzzy_plot",
+        "question": "A skyscraper window washer glimpses a killing through the pane on a high floor, and the murderer notices her back; a lawyer from the storey beneath tries to buy her silence.",
+        "gold_movie_ids": [
+          "the-window-cleaner-s-witness-1997-6"
+        ],
+        "ranked_movie_ids": [
+          "the-window-cleaner-s-witness-1997-6",
+          "the-thirteenth-floor-passenger-1961-35",
+          "the-window-display-crime-2002-294",
+          "the-laundry-line-alibi-1980-130",
+          "the-patient-s-prophecy-1959-18",
+          "the-unbroadcast-script-2014-278",
+          "the-apartment-photographs-1962-63",
+          "the-scratched-wardrobe-1983-193"
+        ],
+        "scores": [
+          1.0,
+          0.53333336,
+          0.5,
+          0.29,
+          0.2625,
+          0.25,
+          0.21666667,
+          0.1883117
+        ],
+        "rank": 1,
+        "latency_ms": 59.24
+      },
+      {
+        "question_id": "fuzzy-07",
+        "type": "fuzzy_plot",
+        "question": "A keeper of a mountain refuge opens the visitors' register to find tomorrow already filled in by a walker who has not shown up yet.",
+        "gold_movie_ids": [
+          "the-pre-signed-guest-book-1957-155"
+        ],
+        "ranked_movie_ids": [
+          "the-pre-signed-guest-book-1957-155",
+          "the-note-reading-tomorrow-2015-288",
+          "the-concert-ticket-2000-224",
+          "the-frozen-case-1977-29",
+          "the-permanent-passenger-1967-222",
+          "the-warm-dinner-1942-147",
+          "the-sealed-border-envelope-1987-157",
+          "the-letter-to-an-unknown-planet-1984-217"
+        ],
+        "scores": [
+          1.0,
+          0.53333336,
+          0.375,
+          0.2916667,
+          0.25,
+          0.25,
+          0.24000001,
+          0.16849817
+        ],
+        "rank": 1,
+        "latency_ms": 33.74
+      },
+      {
+        "question_id": "fuzzy-08",
+        "type": "fuzzy_plot",
+        "question": "A trainee caring for a baby fire-breather learns that it lives solely on melodies, and the village's choir director finds it has swallowed their finest hymn.",
+        "gold_movie_ids": [
+          "the-song-eating-hatchling-1992-103"
+        ],
+        "ranked_movie_ids": [
+          "the-song-eating-hatchling-1992-103",
+          "the-campfire-song-from-the-lake-1948-236",
+          "the-weeping-lullaby-1977-268",
+          "the-blank-postcard-2015-88",
+          "a-song-for-the-sleeping-mill-1977-185",
+          "the-national-choir-prize-1999-258",
+          "the-commuter-s-melody-1996-68",
+          "the-anonymous-violin-pupil-2003-99"
+        ],
+        "scores": [
+          0.5769231,
+          0.5,
+          0.5,
+          0.33333334,
+          0.31666666,
+          0.30952382,
+          0.25555557,
+          0.25
+        ],
+        "rank": 1,
+        "latency_ms": 64.5
+      },
+      {
+        "question_id": "fuzzy-09",
+        "type": "fuzzy_plot",
+        "question": "A farmer's daughter in the fenland jokingly puts on a headpiece woven from rushes she found drifting in a flood, and the wetlands start obeying her while she gradually forgets her own name.",
+        "gold_movie_ids": [
+          "the-hollow-crown-of-marsh-end-1996-113"
+        ],
+        "ranked_movie_ids": [
+          "the-hollow-crown-of-marsh-end-1996-113",
+          "kerosene-summer-1975-49",
+          "the-minefield-garden-1976-144",
+          "the-cartographer-s-daughter-1938-81",
+          "the-faces-in-the-honeycomb-1997-271",
+          "the-drifting-capsule-1973-201",
+          "the-filing-cabinet-2005-122",
+          "the-geese-uprising-1964-215"
+        ],
+        "scores": [
+          1.0,
+          0.5,
+          0.5,
+          0.45,
+          0.35964912,
+          0.33333334,
+          0.33333334,
+          0.33333334
+        ],
+        "rank": 1,
+        "latency_ms": 69.33
+      },
+      {
+        "question_id": "fuzzy-10",
+        "type": "fuzzy_plot",
+        "question": "An insurer hires a deep-sea diver to locate a freighter lost near a famous Australian coral reef, but inside he finds the hull was cut open from within and a hidden logbook showing the vessel was sunk deliberately.",
+        "gold_movie_ids": [
+          "salvage-rights-1981-22"
+        ],
+        "ranked_movie_ids": [
+          "salvage-rights-1981-22",
+          "the-bottled-confession-1971-156",
+          "atlas-of-lost-birthdays-2015-248",
+          "the-empty-warehouse-fire-1976-75",
+          "echo-chamber-9-2016-136",
+          "the-cartographer-s-daughter-1938-81",
+          "the-sold-island-1929-292",
+          "the-coordinate-logbook-1935-131"
+        ],
+        "scores": [
+          1.0,
+          0.52040815,
+          0.5,
+          0.4,
+          0.33333334,
+          0.33333334,
+          0.33333334,
+          0.32692307
+        ],
+        "rank": 1,
+        "latency_ms": 37.87
+      },
+      {
+        "question_id": "exact-01",
+        "type": "exact_entity",
+        "question": "Tell me about the film Counterfeit Spring.",
+        "gold_movie_ids": [
+          "counterfeit-spring-1952-151"
+        ],
+        "ranked_movie_ids": [
+          "counterfeit-spring-1952-151",
+          "monsoon-heist-2005-280",
+          "pashmina-1998-93",
+          "the-window-display-crime-2002-294",
+          "the-cigarette-tray-messages-1961-65",
+          "the-landslide-week-1965-195",
+          "the-kinder-translation-1921-153",
+          "the-replacement-flowerpot-1922-158"
+        ],
+        "scores": [
+          0.8333334,
+          0.5,
+          0.5,
+          0.3678161,
+          0.33333334,
+          0.27040815,
+          0.25,
+          0.25
+        ],
+        "rank": 1,
+        "latency_ms": 29.58
+      },
+      {
+        "question_id": "exact-02",
+        "type": "exact_entity",
+        "question": "What is the plot of Kimchi Wars?",
+        "gold_movie_ids": [
+          "kimchi-wars-2014-114"
+        ],
+        "ranked_movie_ids": [
+          "kimchi-wars-2014-114",
+          "the-sabotaged-bread-1933-128",
+          "operation-teacup-1944-297",
+          "the-two-hundred-year-distress-call-1997-249",
+          "the-inflatable-army-2004-42",
+          "the-sack-of-flour-1961-11",
+          "the-annotated-book-1959-134",
+          "the-filmless-camera-2010-110"
+        ],
+        "scores": [
+          1.0,
+          0.6666667,
+          0.25,
+          0.25,
+          0.21929824,
+          0.20952383,
+          0.2,
+          0.2
+        ],
+        "rank": 1,
+        "latency_ms": 30.52
+      },
+      {
+        "question_id": "exact-03",
+        "type": "exact_entity",
+        "question": "Which film is Nile Postman and when was it released?",
+        "gold_movie_ids": [
+          "nile-postman-1960-43"
+        ],
+        "ranked_movie_ids": [
+          "nile-postman-1960-43",
+          "the-ghostwritten-confession-1987-228",
+          "the-weightless-passenger-1992-154",
+          "the-last-projectionist-1992-141",
+          "rails-beneath-the-snow-1963-277",
+          "the-coffin-on-the-ferry-2010-174",
+          "the-freed-lamp-spirit-1987-285",
+          "the-blank-postcard-2015-88"
+        ],
+        "scores": [
+          1.0,
+          0.5,
+          0.5,
+          0.39285713,
+          0.33333334,
+          0.33333334,
+          0.33333334,
+          0.2909091
+        ],
+        "rank": 1,
+        "latency_ms": 31.78
+      },
+      {
+        "question_id": "exact-04",
+        "type": "exact_entity",
+        "question": "Find the film titled Pashmina.",
+        "gold_movie_ids": [
+          "pashmina-1998-93"
+        ],
+        "ranked_movie_ids": [
+          "pashmina-1998-93",
+          "rails-beneath-the-snow-1963-277",
+          "the-unseen-reel-1946-9",
+          "the-package-with-the-thumb-1971-267",
+          "the-ledger-of-deaths-2015-166",
+          "the-unexplained-figure-in-the-photographs-1954-255",
+          "monsoon-heist-2005-280",
+          "the-last-projectionist-1992-141"
+        ],
+        "scores": [
+          0.8333334,
+          0.5769231,
+          0.3611111,
+          0.33333334,
+          0.27083334,
+          0.2625,
+          0.2,
+          0.19166666
+        ],
+        "rank": 1,
+        "latency_ms": 30.51
+      },
+      {
+        "question_id": "exact-05",
+        "type": "exact_entity",
+        "question": "What happens in Echo Chamber 9?",
+        "gold_movie_ids": [
+          "echo-chamber-9-2016-136"
+        ],
+        "ranked_movie_ids": [
+          "echo-chamber-9-2016-136",
+          "the-midnight-patient-1961-96",
+          "the-overheard-midnight-call-1968-1",
+          "the-unbroadcast-script-2014-278",
+          "the-rearranged-diary-2013-264",
+          "the-reservoir-stone-1951-168",
+          "the-concert-ticket-2000-224",
+          "the-ninth-bell-of-varnholt-1931-14"
+        ],
+        "scores": [
+          1.0,
+          0.5,
+          0.5,
+          0.34285715,
+          0.33333334,
+          0.33333334,
+          0.25,
+          0.25
+        ],
+        "rank": 1,
+        "latency_ms": 31.67
+      },
+      {
+        "question_id": "exact-06",
+        "type": "exact_entity",
+        "question": "Look up Black Tulip Hotel for me.",
+        "gold_movie_ids": [
+          "black-tulip-hotel-1971-190"
+        ],
+        "ranked_movie_ids": [
+          "black-tulip-hotel-1971-190",
+          "the-empty-hotel-room-1968-71",
+          "the-dead-guest-s-booking-1967-229",
+          "the-last-projectionist-1992-141",
+          "the-bartender-s-list-1994-25",
+          "the-patron-at-table-nine-2006-139",
+          "the-identical-umbrellas-1997-269",
+          "the-overheard-midnight-call-1968-1"
+        ],
+        "scores": [
+          1.0,
+          0.5833334,
+          0.45833334,
+          0.3409091,
+          0.2909091,
+          0.23809525,
+          0.22857143,
+          0.21978024
+        ],
+        "rank": 1,
+        "latency_ms": 31.47
+      },
+      {
+        "question_id": "exact-07",
+        "type": "exact_entity",
+        "question": "Which film did Gleb Ostrovsky-Marin direct?",
+        "gold_movie_ids": [
+          "rails-beneath-the-snow-1963-277"
+        ],
+        "ranked_movie_ids": [
+          "rails-beneath-the-snow-1963-277",
+          "the-last-projectionist-1992-141",
+          "the-landslide-week-1965-195",
+          "the-ruined-festival-1926-245",
+          "the-unbroadcast-script-2014-278",
+          "the-suitcase-in-the-lock-1926-291",
+          "the-sea-monster-costume-1956-261",
+          "the-forgetting-hour-1947-282"
+        ],
+        "scores": [
+          0.7,
+          0.5833333,
+          0.5,
+          0.5,
+          0.38596493,
+          0.3768116,
+          0.3678161,
+          0.29166666
+        ],
+        "rank": 1,
+        "latency_ms": 33.32
+      },
+      {
+        "question_id": "exact-08",
+        "type": "exact_entity",
+        "question": "What did the director Ling Wai-hung make?",
+        "gold_movie_ids": [
+          "midnight-ferry-to-kowloon-1988-250"
+        ],
+        "ranked_movie_ids": [
+          "the-stone-coat-1984-173",
+          "midnight-ferry-to-kowloon-1988-250",
+          "the-sea-monster-costume-1956-261",
+          "the-silent-film-heroine-1973-52",
+          "a-song-for-the-sleeping-mill-1977-185",
+          "the-violin-case-1960-206",
+          "the-delegates-dialect-2016-189",
+          "the-laundry-line-alibi-1980-130"
+        ],
+        "scores": [
+          0.64285713,
+          0.5416667,
+          0.33333334,
+          0.33333334,
+          0.25,
+          0.25,
+          0.21111111,
+          0.2
+        ],
+        "rank": 2,
+        "latency_ms": 31.84
+      },
+      {
+        "question_id": "exact-09",
+        "type": "exact_entity",
+        "question": "Show me the film directed by Rejean Thibodault.",
+        "gold_movie_ids": [
+          "tin-soldiers-of-avenue-dorval-1969-227"
+        ],
+        "ranked_movie_ids": [
+          "the-apartment-photographs-1962-63",
+          "tin-soldiers-of-avenue-dorval-1969-227",
+          "the-unbroadcast-script-2014-278",
+          "the-last-projectionist-1992-141",
+          "the-torn-tailed-kite-2004-203",
+          "the-minefield-garden-1976-144",
+          "the-brass-band-strike-1949-37",
+          "the-unseen-reel-1946-9"
+        ],
+        "scores": [
+          0.5277778,
+          0.5,
+          0.45,
+          0.38596493,
+          0.33333334,
+          0.26785713,
+          0.25,
+          0.20512821
+        ],
+        "rank": 2,
+        "latency_ms": 32.41
+      },
+      {
+        "question_id": "exact-10",
+        "type": "exact_entity",
+        "question": "Is there a film by the director Maxime Delorimier-Haas, and what is it about?",
+        "gold_movie_ids": [
+          "cold-storage-2017-260"
+        ],
+        "ranked_movie_ids": [
+          "the-last-projectionist-1992-141",
+          "cold-storage-2017-260",
+          "the-unbroadcast-script-2014-278",
+          "the-sea-monster-costume-1956-261",
+          "the-silent-film-heroine-1973-52",
+          "a-song-for-the-sleeping-mill-1977-185",
+          "the-window-cleaner-s-witness-1997-6",
+          "the-forgetting-hour-1947-282"
+        ],
+        "scores": [
+          0.625,
+          0.6111111,
+          0.39583334,
+          0.36458334,
+          0.34285715,
+          0.25,
+          0.25,
+          0.21428572
+        ],
+        "rank": 2,
+        "latency_ms": 34.13
+      },
+      {
+        "question_id": "filtered-01",
+        "type": "filtered",
+        "question": "A film about villagers in a dry region who hijack a fuel truck to expose a rich landowner who is draining their well.",
+        "gold_movie_ids": [
+          "kerosene-summer-1975-49"
+        ],
+        "ranked_movie_ids": [
+          "kerosene-summer-1975-49"
+        ],
+        "scores": [
+          1.0
+        ],
+        "rank": 1,
+        "latency_ms": 33.41
+      },
+      {
+        "question_id": "filtered-02",
+        "type": "filtered",
+        "question": "A British wartime comedy in which officials try to convince the enemy that the invasion will come ashore at a seaside resort by staging a mock social gathering on the sand.",
+        "gold_movie_ids": [
+          "operation-teacup-1944-297"
+        ],
+        "ranked_movie_ids": [
+          "operation-teacup-1944-297",
+          "the-warm-dinner-1942-147",
+          "the-smiling-patient-1947-125",
+          "the-burning-toll-coin-1943-209",
+          "the-love-letter-plane-1949-183"
+        ],
+        "scores": [
+          1.0,
+          0.5,
+          0.34285715,
+          0.2,
+          0.16666667
+        ],
+        "rank": 1,
+        "latency_ms": 36.45
+      },
+      {
+        "question_id": "filtered-03",
+        "type": "filtered",
+        "question": "A widow leads thousands of cattle hundreds of kilometres through the outback to a railway, betrayed by the man who hired her.",
+        "gold_movie_ids": [
+          "the-drover-s-hymn-1979-213"
+        ],
+        "ranked_movie_ids": [
+          "the-drover-s-hymn-1979-213"
+        ],
+        "scores": [
+          1.0
+        ],
+        "rank": 1,
+        "latency_ms": 33.78
+      },
+      {
+        "question_id": "filtered-04",
+        "type": "filtered",
+        "question": "Half a dozen strangers hired by an ex-illusionist plan a vault robbery while flooding paralyses the city.",
+        "gold_movie_ids": [
+          "monsoon-heist-2005-280"
+        ],
+        "ranked_movie_ids": [
+          "monsoon-heist-2005-280"
+        ],
+        "scores": [
+          1.0
+        ],
+        "rank": 1,
+        "latency_ms": 41.55
+      },
+      {
+        "question_id": "filtered-05",
+        "type": "filtered",
+        "question": "Textile workers organise a choir whose songs plead with the owner's family to keep the factory open.",
+        "gold_movie_ids": [
+          "a-song-for-the-sleeping-mill-1977-185"
+        ],
+        "ranked_movie_ids": [
+          "a-song-for-the-sleeping-mill-1977-185",
+          "the-bird-summoning-flute-1960-272",
+          "the-empty-house-aria-1970-39"
+        ],
+        "scores": [
+          1.0,
+          0.5833334,
+          0.5833334
+        ],
+        "rank": 1,
+        "latency_ms": 38.15
+      },
+      {
+        "question_id": "filtered-06",
+        "type": "filtered",
+        "question": "Travellers marooned at a provincial railway halt confess their secrets to one another while the keeper's spouse starts to doubt she wants a train to turn up.",
+        "gold_movie_ids": [
+          "seven-days-of-rain-in-tsarskoye-1927-253"
+        ],
+        "ranked_movie_ids": [
+          "seven-days-of-rain-in-tsarskoye-1927-253",
+          "the-suitcase-in-the-lock-1926-291"
+        ],
+        "scores": [
+          1.0,
+          0.6666667
+        ],
+        "rank": 1,
+        "latency_ms": 35.75
+      },
+      {
+        "question_id": "filtered-07",
+        "type": "filtered",
+        "question": "A tiny seafaring vessel made from a nut husk crosses a kitchen basin, chased by a buccaneer made of sponge.",
+        "gold_movie_ids": [
+          "the-walnut-shell-boat-1968-10"
+        ],
+        "ranked_movie_ids": [
+          "the-walnut-shell-boat-1968-10",
+          "tin-soldiers-of-avenue-dorval-1969-227"
+        ],
+        "scores": [
+          1.0,
+          0.6666667
+        ],
+        "rank": 1,
+        "latency_ms": 43.71
+      },
+      {
+        "question_id": "filtered-08",
+        "type": "filtered",
+        "question": "Every rider on the late bus holds the same dark parasol, and the driver grows uneasy.",
+        "gold_movie_ids": [
+          "the-identical-umbrellas-1997-269"
+        ],
+        "ranked_movie_ids": [
+          "the-identical-umbrellas-1997-269",
+          "midnight-ferry-to-kowloon-1988-250"
+        ],
+        "scores": [
+          1.0,
+          0.33333334
+        ],
+        "rank": 1,
+        "latency_ms": 38.21
+      },
+      {
+        "question_id": "filtered-09",
+        "type": "filtered",
+        "question": "On a failing orbital outpost a botanist protects her apple grove from being jettisoned, because it secretly keeps the air breathable.",
+        "gold_movie_ids": [
+          "orbit-of-the-last-orchard-1984-91"
+        ],
+        "ranked_movie_ids": [
+          "orbit-of-the-last-orchard-1984-91",
+          "the-child-shaped-robot-2005-59"
+        ],
+        "scores": [
+          1.0,
+          0.33333334
+        ],
+        "rank": 1,
+        "latency_ms": 57.34
+      },
+      {
+        "question_id": "filtered-10",
+        "type": "filtered",
+        "question": "An elderly ceramicist in a village high in the hills promises her workshop to whichever apprentice can produce seven identical tea cups before winter's first snowfall.",
+        "gold_movie_ids": [
+          "seven-stones-for-hatsue-1956-40"
+        ],
+        "ranked_movie_ids": [
+          "seven-stones-for-hatsue-1956-40",
+          "the-ticket-to-nowhere-1950-226",
+          "the-funeral-for-the-living-1956-220",
+          "the-island-at-low-tide-1953-221",
+          "the-haunted-house-attraction-1954-163",
+          "the-annotated-book-1959-134"
+        ],
+        "scores": [
+          1.0,
+          0.5833334,
+          0.5,
+          0.25,
+          0.2,
+          0.14285715
+        ],
+        "rank": 1,
+        "latency_ms": 38.92
+      },
+      {
+        "question_id": "unanswerable-01",
+        "type": "unanswerable",
+        "question": "Find the film where a talking dinosaur runs for president of Mars.",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "echo-chamber-9-2016-136",
+          "the-kinder-translation-1921-153",
+          "paper-boats-in-the-monsoon-2011-79",
+          "the-letter-to-an-unknown-planet-1984-217",
+          "the-gridded-martian-rain-2015-265",
+          "the-church-basement-kitchen-2005-2",
+          "the-recycled-water-signal-1993-8",
+          "the-bakery-on-quill-street-2006-76"
+        ],
+        "scores": [
+          0.7,
+          0.5277778,
+          0.5,
+          0.5,
+          0.4047619,
+          0.33333334,
+          0.33333334,
+          0.25
+        ],
+        "rank": null,
+        "latency_ms": 31.38
+      },
+      {
+        "question_id": "unanswerable-02",
+        "type": "unanswerable",
+        "question": "I remember a film in which submariners discover a civilisation of intelligent jellyfish living in an undersea trench.",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "the-spiral-trench-1952-286",
+          "the-goldfish-tunnel-1988-112",
+          "the-submarine-pantry-1915-19",
+          "the-recycled-water-signal-1993-8",
+          "salvage-rights-1981-22",
+          "the-funeral-for-the-living-1956-220",
+          "the-living-ink-1934-111",
+          "echo-chamber-9-2016-136"
+        ],
+        "scores": [
+          0.7,
+          0.5555556,
+          0.5,
+          0.3611111,
+          0.33333334,
+          0.25,
+          0.2,
+          0.16666667
+        ],
+        "rank": null,
+        "latency_ms": 42.01
+      },
+      {
+        "question_id": "unanswerable-03",
+        "type": "unanswerable",
+        "question": "Which film is about a retired figure skater who assembles a crew to rob a diamond exchange in 1970s Rotterdam?",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "monsoon-heist-2005-280",
+          "the-last-projectionist-1992-141",
+          "the-unexplained-figure-in-the-photographs-1954-255",
+          "the-last-crossing-1986-276",
+          "rails-beneath-the-snow-1963-277",
+          "the-children-who-follow-the-van-1979-60",
+          "the-landslide-week-1965-195",
+          "the-patron-at-table-nine-2006-139"
+        ],
+        "scores": [
+          0.54347825,
+          0.53125,
+          0.4047619,
+          0.33333334,
+          0.28333333,
+          0.25,
+          0.2,
+          0.2
+        ],
+        "rank": null,
+        "latency_ms": 38.62
+      },
+      {
+        "question_id": "unanswerable-04",
+        "type": "unanswerable",
+        "question": "What was that movie where a time-travelling samurai opens a sushi franchise in Texas?",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "the-diner-photograph-1987-84",
+          "the-hollow-crown-of-marsh-end-1996-113",
+          "salvage-rights-1981-22",
+          "the-refrigerated-capsule-2010-161",
+          "black-tulip-hotel-1971-190",
+          "the-schoolhouse-target-range-2015-171",
+          "the-dough-creatures-1971-287",
+          "the-first-portraits-1931-199"
+        ],
+        "scores": [
+          0.5,
+          0.5,
+          0.33333334,
+          0.33333334,
+          0.28703704,
+          0.25,
+          0.21978024,
+          0.2
+        ],
+        "rank": null,
+        "latency_ms": 32.66
+      },
+      {
+        "question_id": "unanswerable-05",
+        "type": "unanswerable",
+        "question": "A teenage gang starts a pirate radio station inside an abandoned zoo in 1980s Brazil, what is it called?",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "the-stranded-station-quartet-1987-202",
+          "the-drover-s-hymn-1979-213",
+          "glass-harvest-2013-198",
+          "nile-postman-1960-43",
+          "the-abandoned-bandstand-1983-24",
+          "the-singing-signal-1988-17",
+          "the-whispered-call-2017-12",
+          "the-nightly-radio-voice-1970-5"
+        ],
+        "scores": [
+          0.55263156,
+          0.53225803,
+          0.3703704,
+          0.33333334,
+          0.30952382,
+          0.27702704,
+          0.25,
+          0.22916667
+        ],
+        "rank": null,
+        "latency_ms": 34.08
+      },
+      {
+        "question_id": "unanswerable-06",
+        "type": "unanswerable",
+        "question": "Is there a mockumentary about a Scandinavian curling team that turns into a cult sensation?",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "glass-harvest-2013-198",
+          "kimchi-wars-2014-114",
+          "the-landslide-week-1965-195",
+          "the-circus-restaurant-2000-108",
+          "the-premature-wake-1977-233",
+          "the-stolen-violin-1946-254",
+          "the-climbing-hydroponic-vines-1986-28",
+          "the-freed-lamp-spirit-1987-285"
+        ],
+        "scores": [
+          0.5,
+          0.5,
+          0.36036038,
+          0.33333334,
+          0.29545456,
+          0.25,
+          0.2,
+          0.2
+        ],
+        "rank": null,
+        "latency_ms": 33.14
+      },
+      {
+        "question_id": "unanswerable-07",
+        "type": "unanswerable",
+        "question": "An astronaut stranded on Venus teaches a swarm of bees to play baseball, which film is that?",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "the-apartment-beehive-2002-31",
+          "the-faces-in-the-honeycomb-1997-271",
+          "the-drifting-capsule-1973-201",
+          "the-last-continental-tree-2008-13",
+          "the-stranded-station-quartet-1987-202",
+          "rails-beneath-the-snow-1963-277",
+          "the-climbing-hydroponic-vines-1986-28",
+          "the-brass-band-strike-1949-37"
+        ],
+        "scores": [
+          0.6666667,
+          0.5714286,
+          0.5,
+          0.33333334,
+          0.33333334,
+          0.2,
+          0.2,
+          0.17777778
+        ],
+        "rank": null,
+        "latency_ms": 33.85
+      },
+      {
+        "question_id": "unanswerable-08",
+        "type": "unanswerable",
+        "question": "Recommend a silent whaling drama from Norway.",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [],
+        "scores": [],
+        "rank": null,
+        "latency_ms": 29.65
+      },
+      {
+        "question_id": "unanswerable-09",
+        "type": "unanswerable",
+        "question": "I am looking for the film about a sentient lighthouse that becomes infatuated with a passing cargo ship.",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [
+          "the-ballads-of-passing-ships-1941-140",
+          "the-sold-island-1929-292",
+          "the-cigarette-tray-messages-1961-65",
+          "the-permanent-passenger-1967-222",
+          "the-four-dark-minutes-1977-210",
+          "the-refrigerated-capsule-2010-161",
+          "salt-lantern-1999-67",
+          "the-patron-at-table-nine-2006-139"
+        ],
+        "scores": [
+          0.7,
+          0.525641,
+          0.5,
+          0.5,
+          0.4,
+          0.35833335,
+          0.35606062,
+          0.33333334
+        ],
+        "rank": null,
+        "latency_ms": 35.03
+      },
+      {
+        "question_id": "unanswerable-10",
+        "type": "unanswerable",
+        "question": "A vampire dentist in 1950s Mumbai, what is the film?",
+        "gold_movie_ids": [],
+        "ranked_movie_ids": [],
+        "scores": [],
+        "rank": null,
+        "latency_ms": 30.89
+      }
+    ]
+  },
+  "llm": {
+    "status": "pending_credentials",
+    "reason": "set NEBIUS_API_KEY — see docs/CREDENTIALS.md",
+    "chat_model": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+    "judge_model": "openai/gpt-oss-120b",
+    "ragas_version": "0.4.3",
+    "agent": null,
+    "ragas": null,
+    "agent_per_question": null,
+    "ragas_per_question": null
+  },
+  "langsmith": {
+    "status": "skipped",
+    "detail": "skipped: no LANGSMITH_API_KEY",
+    "experiment_name": null
+  }
+}

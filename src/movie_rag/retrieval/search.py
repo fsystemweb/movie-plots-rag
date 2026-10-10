@@ -129,6 +129,15 @@ def snippet_of(text: str, max_chars: int) -> str:
     return cut.rstrip(" ,;:-") + ELLIPSIS
 
 
+def by_score_then_id(hits: list[MovieHit]) -> list[MovieHit]:
+    """Best score first; films with the same score are ordered by ``movie_id``, so identical calls give identical lists.
+
+    Reciprocal rank fusion gives equal scores to a film that is first in one list and second in the other, and Qdrant
+    returns tied films in a varying order. (Which tied films make the ``top_k`` cut is still the server's choice.)
+    """
+    return sorted(hits, key=lambda hit: (-hit.score, hit.movie_id))
+
+
 def build_request(
     settings: Settings,
     *,
@@ -228,7 +237,7 @@ class Retriever:
                 sparse=self.embedder.embed_sparse_query(query) if mode != "dense" else None,
             )
             result = self.client.query_points_groups(**request)
-            hits = [self._to_hit(group.hits[0]) for group in result.groups if group.hits]
+            hits = by_score_then_id([self._to_hit(group.hits[0]) for group in result.groups if group.hits])
             run.set(result_count=len(hits), movie_ids=[h.movie_id for h in hits])
         logger.info("search mode=%s top_k=%d filters=%s -> %d films", mode, top_k, filters, len(hits))
         return hits
@@ -287,7 +296,7 @@ class Retriever:
                 limit=top_k,
                 with_payload=True,
             )
-            hits = [self._to_hit(group.hits[0]) for group in result.groups if group.hits]
+            hits = by_score_then_id([self._to_hit(group.hits[0]) for group in result.groups if group.hits])
             run.set(result_count=len(hits), movie_ids=[h.movie_id for h in hits])
         return hits
 
