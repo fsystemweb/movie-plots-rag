@@ -21,7 +21,18 @@ from fakes import ScriptedChatModel
 from movie_rag.config import Settings
 from movie_rag.eval import __main__ as cli
 from movie_rag.eval.__main__ import RESULTS_NAME, build_parser, format_summary, main, smoke_failures
-from movie_rag.eval.report import README_BEGIN, README_END, render_readme_block, write_report
+from movie_rag.eval.report import (
+    OVERVIEW_QUALITY_BEGIN,
+    OVERVIEW_QUALITY_END,
+    OVERVIEW_SPEED_BEGIN,
+    OVERVIEW_SPEED_END,
+    README_BEGIN,
+    README_END,
+    render_overview_quality,
+    render_overview_speed,
+    render_readme_block,
+    write_report,
+)
 
 pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
 
@@ -32,6 +43,12 @@ def reports_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     readme = tmp_path / "README.md"  # never the real README: `report` rewrites its results block
     readme.write_text(f"# Title\n\n{README_BEGIN}\nold\n{README_END}\n\nafter\n")
     monkeypatch.setenv("EVAL__README_PATH", str(readme))
+    overview = tmp_path / "SOLUTION_OVERVIEW.md"  # likewise: `report` rewrites its two generated blocks
+    overview.write_text(
+        f"# Overview\n\n{OVERVIEW_QUALITY_BEGIN}\nold\n{OVERVIEW_QUALITY_END}\n\ntext\n\n"
+        f"{OVERVIEW_SPEED_BEGIN}\nold\n{OVERVIEW_SPEED_END}\n"
+    )
+    monkeypatch.setenv("EVAL__OVERVIEW_PATH", str(overview))
     return tmp_path / "reports"
 
 
@@ -115,6 +132,30 @@ def test_report_rewrites_the_results_block_of_the_readme_and_nothing_else(
     readme = (reports_dir.parent / "README.md").read_text()
     assert readme == f"# Title\n\n{render_readme_block(reports)}\n\nafter\n"
     assert "results block of" in capsys.readouterr().err
+
+
+def test_report_rewrites_the_two_overview_blocks_and_nothing_else(
+    reports_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    reports = cached_reports()
+    for report in reports:
+        write_report(report, reports_dir)
+    assert main(["report"]) == 0
+    overview = (reports_dir.parent / "SOLUTION_OVERVIEW.md").read_text()
+    assert overview == (
+        f"# Overview\n\n{render_overview_quality(reports)}\n\ntext\n\n{render_overview_speed(reports)}\n"
+    )
+    assert "result blocks of" in capsys.readouterr().err
+
+
+def test_report_fails_clearly_when_the_overview_has_no_blocks(
+    reports_dir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for report in cached_reports():
+        write_report(report, reports_dir)
+    (reports_dir.parent / "SOLUTION_OVERVIEW.md").write_text("# no markers here\n")
+    assert main(["report"]) == 1
+    assert "exactly one results block" in capsys.readouterr().err
 
 
 def test_report_fails_clearly_when_the_readme_has_no_results_block(

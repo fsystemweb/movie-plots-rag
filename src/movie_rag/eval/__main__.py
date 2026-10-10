@@ -4,8 +4,8 @@
   (agent + RAGAS) runs when ``NEBIUS_API_KEY`` is set and is recorded as "pending credentials" otherwise.
 * ``smoke [--llm]``: the retrieval half on the fixture for all three modes, printed, nothing written; fails when a
   mode's MRR drops below ``eval.smoke_min_mrr``. ``--llm`` adds a small agent + RAGAS sample (skipped without a key).
-* ``report``: render ``<reports_dir>/EVAL_RESULTS.md`` and the results block of the README (``eval.readme_path``)
-  from the JSON files.
+* ``report``: render ``<reports_dir>/EVAL_RESULTS.md``, the results block of the README (``eval.readme_path``) and the
+  two result blocks of the stakeholder overview (``eval.overview_path``) from the JSON files.
 
 Needs the Qdrant service (``make up``, or ``QDRANT_URL``); the fixture is ingested when it is not in the index yet.
 """
@@ -19,7 +19,14 @@ from collections.abc import Sequence
 
 from movie_rag.config import RetrievalMode, Settings, load_settings
 from movie_rag.errors import MovieRagError
-from movie_rag.eval.report import EvalReport, read_reports, render_markdown, render_readme_block, update_readme
+from movie_rag.eval.report import (
+    EvalReport,
+    read_reports,
+    render_markdown,
+    render_readme_block,
+    update_overview,
+    update_readme,
+)
 from movie_rag.eval.runner import MODES, Dependencies, RunResult, run
 from movie_rag.ingest.download import say
 
@@ -155,6 +162,9 @@ def _report(settings: Settings) -> int:
     readme = settings.eval.resolve(settings.eval.readme_path)
     readme.write_text(update_readme(readme.read_text(encoding="utf-8"), render_readme_block(reports)), encoding="utf-8")
     say(f"updated the results block of {readme}")
+    overview = settings.eval.resolve(settings.eval.overview_path)
+    overview.write_text(update_overview(overview.read_text(encoding="utf-8"), reports), encoding="utf-8")
+    say(f"updated the result blocks of {overview}")
     return EXIT_OK
 
 

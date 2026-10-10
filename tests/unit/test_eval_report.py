@@ -15,14 +15,21 @@ from movie_rag.eval.agent_eval import AgentMetrics
 from movie_rag.eval.metrics import AbstentionMetrics, Summary
 from movie_rag.eval.ragas_judge import MetricSummary
 from movie_rag.eval.report import (
+    OVERVIEW_QUALITY_BEGIN,
+    OVERVIEW_QUALITY_END,
+    OVERVIEW_SPEED_BEGIN,
+    OVERVIEW_SPEED_END,
     README_BEGIN,
     README_END,
     EvalReport,
     LlmSection,
     read_reports,
     render_markdown,
+    render_overview_quality,
+    render_overview_speed,
     render_readme_block,
     report_path,
+    update_overview,
     update_readme,
     write_report,
 )
@@ -260,3 +267,76 @@ def test_update_readme_replaces_only_the_marked_region() -> None:
 def test_update_readme_refuses_a_missing_or_duplicated_block(text: str) -> None:
     with pytest.raises(EvalError, match="exactly one results block"):
         update_readme(text, "x")
+
+
+# --- stakeholder overview blocks ---------------------------------------------------------------------------------
+
+
+def test_the_overview_quality_block_carries_the_json_numbers_in_plain_words(reports: list[EvalReport]) -> None:
+    block = render_overview_quality(reports)
+    assert block.startswith(OVERVIEW_QUALITY_BEGIN) and block.endswith(OVERVIEW_QUALITY_END)
+    for report, label in zip(
+        reports, ("Meaning (dense)", "Exact words (sparse)", "Both combined (hybrid)"), strict=True
+    ):
+        overall = report.retrieval.overall
+        row = next(line for line in block.splitlines() if line.startswith(f"| {label} |"))
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        ks = report.retrieval.k_values
+        assert cells[1 : 1 + len(ks)] == [f"{overall.hit_at_k[k]:.2f}" for k in ks]
+        assert overall.mrr is not None and cells[1 + len(ks)] == f"{overall.mrr:.2f}"
+    assert f"{reports[0].question_set.n} questions" in block and f"{reports[0].index.points} indexed passages" in block
+
+
+def test_the_overview_marks_llm_measures_pending_then_shows_them(settings: Settings, reports: list[EvalReport]) -> None:
+    pending_block = render_overview_quality([pending(settings, r) for r in reports])
+    rows = [line for line in pending_block.splitlines() if "I don't know" in line or "faithfulness" in line]
+    assert len(rows) == 3 and all(row.count("pending credentials") == 3 for row in rows)
+    done = render_overview_quality([with_llm(r, completed(settings)) for r in reports])
+    assert "| Answers stay true to their sources (faithfulness) | 0.910 (2/3) |" in done
+    assert "pending credentials" not in done
+
+
+def test_the_overview_speed_block_converts_agent_milliseconds_to_seconds(
+    settings: Settings, reports: list[EvalReport]
+) -> None:
+    block = render_overview_speed([pending(settings, r) for r in reports])
+    assert block.startswith(OVERVIEW_SPEED_BEGIN) and block.endswith(OVERVIEW_SPEED_END)
+    for report in reports:
+        assert f"{report.retrieval.latency_ms.p50:.0f}" in block
+    assert block.count("pending credentials") == 6
+    done_reports = [with_llm(r, completed(settings)) for r in reports]
+    agent = done_reports[0].llm.agent
+    assert agent is not None and agent.latency_ms.p50 is not None
+    seconds_row = next(
+        line for line in render_overview_speed(done_reports).splitlines() if line.startswith("| Seconds per answer")
+    )
+    assert f"| {agent.latency_ms.p50 / 1000:.1f} |" in seconds_row
+
+
+@pytest.mark.parametrize("render", [render_overview_quality, render_overview_speed])
+def test_an_overview_block_needs_reports(render: Callable[[list[EvalReport]], str]) -> None:
+    with pytest.raises(EvalError, match="nothing to render"):
+        render([])
+
+
+def test_update_overview_replaces_both_blocks_and_is_idempotent(reports: list[EvalReport]) -> None:
+    text = (
+        f"a\n{OVERVIEW_QUALITY_BEGIN}\nold $1\n{OVERVIEW_QUALITY_END}\nb\n{OVERVIEW_SPEED_BEGIN}\nold\n"
+        f"{OVERVIEW_SPEED_END}\nc\n"
+    )
+    updated = update_overview(text, reports)
+    assert updated == f"a\n{render_overview_quality(reports)}\nb\n{render_overview_speed(reports)}\nc\n"
+    assert update_overview(updated, reports) == updated
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "no markers\n",
+        f"{OVERVIEW_QUALITY_BEGIN}\n{OVERVIEW_QUALITY_END}\n",
+        f"{OVERVIEW_SPEED_BEGIN}{OVERVIEW_SPEED_END}",
+    ],
+)
+def test_update_overview_refuses_a_missing_block(text: str, reports: list[EvalReport]) -> None:
+    with pytest.raises(EvalError, match="exactly one results block"):
+        update_overview(text, reports)
