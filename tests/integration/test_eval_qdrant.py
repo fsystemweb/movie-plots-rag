@@ -29,19 +29,21 @@ MODES: tuple[RetrievalMode, ...] = ("dense", "sparse", "hybrid") if QDRANT_URL e
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    os.environ["QDRANT__COLLECTION"] = f"movie_plots_eval_it_{uuid.uuid4().hex[:8]}"
+    suffix = uuid.uuid4().hex[:8]
+    os.environ["QDRANT__COLLECTION"] = f"movie_plots_it_main_{suffix}"  # must stay absent: eval never writes it
+    os.environ["EVAL__COLLECTION"] = f"movie_plots_it_eval_{suffix}"
     try:
         return load_settings(env_file=None)
     finally:
-        del os.environ["QDRANT__COLLECTION"]
+        del os.environ["QDRANT__COLLECTION"], os.environ["EVAL__COLLECTION"]
 
 
 @pytest.fixture(scope="module")
 def client(settings: Settings) -> Iterator[QdrantClient]:
     qdrant = QdrantClient(url=QDRANT_URL, timeout=60) if QDRANT_URL else QdrantClient(":memory:")
     yield qdrant
-    if qdrant.collection_exists(settings.qdrant.collection):
-        qdrant.delete_collection(settings.qdrant.collection)
+    if qdrant.collection_exists(settings.eval.collection):
+        qdrant.delete_collection(settings.eval.collection)
     qdrant.close()
 
 
@@ -59,9 +61,11 @@ def first_run(settings: Settings, client: QdrantClient) -> list[EvalReport]:
 
 
 def test_the_evaluation_ingests_the_fixture_and_every_mode_clears_the_smoke_floor(
-    settings: Settings, first_run: list[EvalReport]
+    settings: Settings, client: QdrantClient, first_run: list[EvalReport]
 ) -> None:
     assert first_run[0].index.fixture_ingested_now is True
+    assert first_run[0].index.collection == settings.eval.collection
+    assert not client.collection_exists(settings.qdrant.collection)  # the main collection is never created by eval
     for report in first_run:
         assert report.retrieval.overall.n == 30
         assert report.retrieval.overall.mrr is not None

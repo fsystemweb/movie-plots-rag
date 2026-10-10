@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from pathlib import Path
 from typing import Any
 
 from qdrant_client import QdrantClient
@@ -89,3 +90,18 @@ class CannedRun:
         )
         reports = [by_mode[mode].model_copy(update={"llm": llm}) for mode in modes]
         return RunResult(reports=reports, questions=[])
+
+
+PLOT = " ".join(["a quiet lighthouse keeper catalogues strange tides while the village argues about the harbour"] * 6)
+
+
+def real_looking_csv(tmp_path: Path) -> Path:
+    """Two films that are not in the fixture, in the Kaggle schema: stands in for the real dataset."""
+    path = tmp_path / "real.csv"
+    header = "Release Year,Title,Origin/Ethnicity,Director,Cast,Genre,Wiki Page,Plot\n"
+    rows = [
+        f'2001,Real Film {n},American,Some Director,"A, B",drama,https://en.wikipedia.org/wiki/Real_Film_{n},"{PLOT}"\n'
+        for n in (1, 2)
+    ]
+    path.write_text(header + "".join(rows), encoding="utf-8")
+    return path

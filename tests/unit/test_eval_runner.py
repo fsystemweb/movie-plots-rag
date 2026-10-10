@@ -4,19 +4,22 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 from langchain_core.messages import AIMessage
+from qdrant_client import QdrantClient
 
-from eval_support import fake_deps, retrieval_only, small
-from fakes import ScriptedChatModel
+from eval_support import fake_deps, real_looking_csv, retrieval_only, small
+from fakes import FakeEmbedder, ScriptedChatModel
 from movie_rag.config import Settings
 from movie_rag.errors import EvalError
 from movie_rag.eval.questions import EvalQuestion, load_eval_set
 from movie_rag.eval.ragas_judge import RagasSample
 from movie_rag.eval.runner import PENDING_REASON, evaluate, run, select_per_type
+from movie_rag.ingest.pipeline import ingest_csv
 
 pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
 
@@ -32,6 +35,27 @@ async def constant_score(_: RagasSample) -> float:
 
 def fake_scorers(*_: Any) -> dict[str, Any]:
     return dict.fromkeys(("faithfulness", "response_relevancy", "context_precision", "context_recall"), constant_score)
+
+
+def test_a_run_leaves_a_populated_main_collection_untouched_and_reports_the_eval_collection(
+    settings: Settings, tmp_path: Path
+) -> None:
+    """The real index (`qdrant.collection`) is never written: the run indexes and searches `eval.collection`."""
+    client = QdrantClient(":memory:")
+    ingest_csv(settings, real_looking_csv(tmp_path), client=client, embedder=FakeEmbedder())
+    result = run(
+        settings,
+        ("dense",),
+        attempt_llm=False,
+        experiments=False,
+        deps=fake_deps(client=client),
+        subset=small,
+    )
+    assert client.count(settings.qdrant.collection, exact=True).count == 2
+    index = result.reports[0].index
+    assert index.collection == settings.eval.collection != settings.qdrant.collection
+    assert index.fixture_ingested_now is True and index.other_points == 0
+    assert client.count(settings.eval.collection, exact=True).count == index.points > 1
 
 
 def test_a_retrieval_only_run_measures_every_mode_and_records_what_it_ran_against(settings: Settings) -> None:

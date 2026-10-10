@@ -124,6 +124,7 @@ class DataConfig(_Section):
 
 
 class EvalConfig(_Section):
+    collection: str = Field(min_length=1)  # evaluation's own Qdrant collection: it never touches `qdrant.collection`
     questions_path: Path  # the committed, hand-written and QA-reviewed evaluation set
     generated_path: Path  # where `python -m movie_rag.eval.generate` writes (never the committed set)
     per_type: int = Field(gt=0)  # questions per type in the committed set (4 types)
@@ -135,6 +136,7 @@ class EvalConfig(_Section):
     k_values: list[int] = Field(min_length=1)  # Hit@k cut-offs, strictly increasing; the largest is the retrieval depth
     reports_dir: Path  # eval_<mode>.json and EVAL_RESULTS.md
     readme_path: Path  # the README whose marked results block `make report` rewrites
+    overview_path: Path  # the stakeholder overview whose two marked blocks `make report` rewrites
     smoke_min_mrr: float = Field(ge=0, le=1)  # floor for `make eval-smoke`
     smoke_llm_per_type: int = Field(gt=0)  # questions per type in the LLM half of `make eval-smoke LLM=1`
     ragas_concurrency: int = Field(gt=0)  # RAGAS metric calls in flight at once

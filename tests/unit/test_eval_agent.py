@@ -9,7 +9,7 @@ import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.outputs import ChatResult
 
-from fakes import FakeEmbedder, ScriptedChatModel, tool_call_message
+from fakes import ScriptedChatModel, tool_call_message
 from index_fixture import Index, premise
 from movie_rag.config import Settings
 from movie_rag.errors import MissingCredentialError
@@ -21,7 +21,7 @@ from movie_rag.eval.agent_eval import (
     run_agent,
 )
 from movie_rag.eval.questions import EvalQuestion
-from movie_rag.eval.retrieval_eval import build_eval_server
+from movie_rag.mcp_server.server import build_server
 from movie_rag.retrieval import SearchFilters
 
 pytestmark = pytest.mark.filterwarnings("ignore:Payload indexes have no effect")
@@ -66,7 +66,7 @@ async def test_the_agent_answers_every_question_with_the_mode_pinned_and_citatio
             AIMessage(content="Nothing in the index fits."),
         ]
     )
-    server = build_eval_server(index.settings, index.client, FakeEmbedder())
+    server = build_server(index.settings, index.retriever)
 
     outcomes = await run_agent(index.settings, server, questions, "dense", model=model)
 
@@ -82,7 +82,7 @@ async def test_the_agent_answers_every_question_with_the_mode_pinned_and_citatio
 
 async def test_a_failing_question_is_recorded_and_the_run_goes_on(index: Index, settings: Settings) -> None:
     questions = [fuzzy("fuzzy-01", index.records[3]), unanswerable("unanswerable-01")]
-    server = build_eval_server(index.settings, index.client, FakeEmbedder())
+    server = build_server(index.settings, index.retriever)
     outcomes = await run_agent(
         index.settings, server, questions, "dense", model=ExplodingModel(replies=[AIMessage(content="x")])
     )
@@ -91,7 +91,7 @@ async def test_a_failing_question_is_recorded_and_the_run_goes_on(index: Index, 
 
 
 async def test_a_missing_key_is_not_swallowed_per_question(index: Index) -> None:
-    server = build_eval_server(index.settings, index.client, FakeEmbedder())
+    server = build_server(index.settings, index.retriever)
     with pytest.raises(MissingCredentialError, match="NEBIUS_API_KEY"):
         await run_agent(index.settings, server, [unanswerable("unanswerable-01")], "dense")
 

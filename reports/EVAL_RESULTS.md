@@ -12,11 +12,11 @@ With 30 answerable questions one question is 3.3 percentage points: differences 
 
 | Mode | Generated (UTC) | Git sha | Config hash | ragas | Judge model | Generator model |
 |---|---|---|---|---|---|---|
-| dense | 2026-10-10T13:41:15+00:00 | 6ffa441 | 7fc61e900353 | 0.4.3 | openai/gpt-oss-120b | Qwen/Qwen3-30B-A3B-Instruct-2507 |
-| sparse | 2026-10-10T13:41:16+00:00 | 6ffa441 | 7fc61e900353 | 0.4.3 | openai/gpt-oss-120b | Qwen/Qwen3-30B-A3B-Instruct-2507 |
-| hybrid | 2026-10-10T13:41:17+00:00 | 6ffa441 | 7fc61e900353 | 0.4.3 | openai/gpt-oss-120b | Qwen/Qwen3-30B-A3B-Instruct-2507 |
+| dense | 2026-10-10T15:18:43+00:00 | 5410cf4 | 4a14f329ad96 | 0.4.3 | openai/gpt-oss-120b | Qwen/Qwen3-30B-A3B-Instruct-2507 |
+| sparse | 2026-10-10T15:18:44+00:00 | 5410cf4 | 4a14f329ad96 | 0.4.3 | openai/gpt-oss-120b | Qwen/Qwen3-30B-A3B-Instruct-2507 |
+| hybrid | 2026-10-10T15:18:46+00:00 | 5410cf4 | 4a14f329ad96 | 0.4.3 | openai/gpt-oss-120b | Qwen/Qwen3-30B-A3B-Instruct-2507 |
 
-Embeddings: dense `BAAI/bge-small-en-v1.5`, sparse `Qdrant/bm25`. Collection `movie_plots`. Retrieval depth 8. The judge model is always different from the generator model (checked at run time).
+Embeddings: dense `BAAI/bge-small-en-v1.5`, sparse `Qdrant/bm25`. Index: the synthetic sample library (304 indexed chunks, collection `movie_plots_eval`). Retrieval depth 8. The judge model is always different from the generator model (checked at run time).
 
 ## Retrieval (deterministic, no credentials)
 
@@ -24,9 +24,9 @@ Hit@k: the gold film is among the top k films. MRR: mean of 1/rank of the gold f
 
 | Mode | n | Hit@1 | Hit@3 | Hit@5 | Hit@8 | MRR | latency p50 (ms) | latency p95 (ms) |
 |---|---|---|---|---|---|---|---|---|
-| dense | 30 | 0.767 | 0.767 | 0.833 | 0.900 | 0.792 | 37 | 61 |
-| sparse | 30 | 0.967 | 1.000 | 1.000 | 1.000 | 0.983 | 21 | 22 |
-| hybrid | 30 | 0.883 | 1.000 | 1.000 | 1.000 | 0.942 | 34 | 69 |
+| dense | 30 | 0.767 | 0.767 | 0.833 | 0.900 | 0.792 | 39 | 61 |
+| sparse | 30 | 0.967 | 1.000 | 1.000 | 1.000 | 0.983 | 22 | 24 |
+| hybrid | 30 | 0.883 | 1.000 | 1.000 | 1.000 | 0.942 | 40 | 62 |
 
 ### By question type
 

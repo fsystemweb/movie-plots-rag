@@ -6,8 +6,9 @@ retriever behind it must be backed by a Qdrant *service*: qdrant-client's local 
 filters of grouped hybrid queries, so numbers from it would be wrong; :func:`connect` refuses it.
 
 The question set is written against the fixture films (``movie_id`` includes the CSV row index), so
-:func:`ensure_fixture_indexed` makes sure the collection holds them, ingesting the fixture when it does not (ingestion
-is idempotent: points that exist are skipped).
+:func:`ensure_fixture_indexed` makes sure the *evaluation's own collection* (``eval.collection``, never
+``qdrant.collection``) holds them, ingesting the fixture when it does not (ingestion is idempotent: points that exist
+are skipped). It refuses to ingest into a collection that already holds other films.
 """
 
 from __future__ import annotations
@@ -20,14 +21,14 @@ from typing import Any
 from fastmcp import Client, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 from qdrant_client.local.qdrant_local import QdrantLocal
 
 from movie_rag.config import RetrievalMode, Settings
 from movie_rag.errors import EvalError
 from movie_rag.eval.metrics import RankedQuestion, first_gold_rank
-from movie_rag.eval.questions import EvalQuestion
+from movie_rag.eval.questions import EvalQuestion, fixture_records
 from movie_rag.ingest.embed import Embedder, FastEmbedder
 from movie_rag.ingest.index import point_id
 from movie_rag.ingest.pipeline import ingest_csv
@@ -72,6 +73,7 @@ class IndexInfo(BaseModel):
     collection: str
     points: int
     fixture_ingested_now: bool
+    other_points: int = 0  # points whose film is not one of the fixture's (0: the index is the synthetic fixture only)
 
 
 def connect(settings: Settings, client: QdrantClient | None = None, *, allow_local: bool = False) -> QdrantClient:
@@ -93,18 +95,38 @@ def connect(settings: Settings, client: QdrantClient | None = None, *, allow_loc
     return client
 
 
+def for_eval(settings: Settings) -> Settings:
+    """A copy of ``settings`` whose Qdrant collection is the evaluation's own (``eval.collection``).
+
+    Everything the evaluation indexes or searches goes through this copy, so the main ``qdrant.collection`` (the real
+    index that ``make ask``, the page and ``make serve`` use) is never written by an evaluation.
+    """
+    copy = settings.model_copy(deep=True)
+    copy.qdrant.collection = settings.eval.collection
+    return copy
+
+
 def _gold_ids(questions: Sequence[EvalQuestion]) -> list[str]:
     return sorted({g for q in questions for g in q.gold_movie_ids})
 
 
-def _missing_gold(client: QdrantClient, settings: Settings, questions: Sequence[EvalQuestion]) -> list[str]:
-    collection = settings.qdrant.collection
+def _missing_gold(client: QdrantClient, collection: str, questions: Sequence[EvalQuestion]) -> list[str]:
     gold = _gold_ids(questions)
     if not client.collection_exists(collection):
         return gold
     ids = {movie_id: point_id(movie_id, 0) for movie_id in gold}
     found = {str(p.id) for p in client.retrieve(collection, ids=list(ids.values()), with_payload=False)}
     return [movie_id for movie_id, pid in ids.items() if pid not in found]
+
+
+def _other_points(client: QdrantClient, collection: str, fixture_ids: Sequence[str]) -> int:
+    """Points of ``collection`` whose ``movie_id`` is not a fixture film (0 when the collection does not exist)."""
+    if not client.collection_exists(collection):
+        return 0
+    only_fixture = models.Filter(
+        must_not=[models.FieldCondition(key="movie_id", match=models.MatchAny(any=list(fixture_ids)))]
+    )
+    return client.count(collection, count_filter=only_fixture, exact=True).count
 
 
 def ensure_fixture_indexed(
@@ -114,26 +136,44 @@ def ensure_fixture_indexed(
     *,
     embedder: Embedder | None = None,
 ) -> IndexInfo:
-    """Make sure every gold film is in the collection, ingesting the fixture if some are missing."""
-    missing = _missing_gold(client, settings, questions)
+    """Make sure every gold film is in ``eval.collection``, ingesting the fixture there if some are missing.
+
+    Only the evaluation collection is ever written. Raises :class:`EvalError` instead of ingesting when that collection
+    already holds films that are not the fixture's (for example when ``eval.collection`` was pointed at a real index).
+    """
+    eval_settings = for_eval(settings)
+    collection = eval_settings.qdrant.collection
+    fixture_ids = [r.movie_id for r in fixture_records(settings)]
+    missing = _missing_gold(client, collection, questions)
     ingested = False
     if missing:
-        logger.info("%d gold films are not indexed: ingesting the fixture", len(missing))
+        foreign = _other_points(client, collection, fixture_ids)
+        if foreign:
+            raise EvalError(
+                f"collection {collection!r} holds {foreign} points that are not fixture films, and {len(missing)} "
+                "gold films are missing from it. The evaluation only adds the synthetic fixture to an empty "
+                "collection of its own: set eval.collection (EVAL__COLLECTION) to a different name."
+            )
+        logger.info("%d gold films are not indexed: ingesting the fixture into %s", len(missing), collection)
         ingest_csv(
-            settings,
-            settings.data.resolve(settings.data.fixture_path),
+            eval_settings,
+            eval_settings.data.resolve(eval_settings.data.fixture_path),
             client=client,
-            embedder=embedder or FastEmbedder(settings.embeddings),
+            embedder=embedder or FastEmbedder(eval_settings.embeddings),
         )
         ingested = True
-        still_missing = _missing_gold(client, settings, questions)
+        still_missing = _missing_gold(client, collection, questions)
         if still_missing:
             raise EvalError(
                 f"{len(still_missing)} gold films are still missing after ingesting the fixture "
                 f"(first: {still_missing[0]}): the question set does not match {settings.data.fixture_path}."
             )
-    points = client.count(settings.qdrant.collection, exact=True).count
-    return IndexInfo(collection=settings.qdrant.collection, points=points, fixture_ingested_now=ingested)
+    return IndexInfo(
+        collection=collection,
+        points=client.count(collection, exact=True).count,
+        fixture_ingested_now=ingested,
+        other_points=_other_points(client, collection, fixture_ids),
+    )
 
 
 def search_arguments(question: EvalQuestion, mode: RetrievalMode, depth: int) -> dict[str, Any]:
@@ -142,8 +182,8 @@ def search_arguments(question: EvalQuestion, mode: RetrievalMode, depth: int) ->
 
 
 def build_eval_server(settings: Settings, client: QdrantClient, embedder: Embedder | None = None) -> FastMCP:
-    """The project's MCP server over ``client`` (the same tools the agent and the UI call)."""
-    retriever = Retriever(settings, client=client, embedder=embedder)
+    """The project's MCP server over ``client`` and ``eval.collection`` (the same tools the agent and the UI call)."""
+    retriever = Retriever(for_eval(settings), client=client, embedder=embedder)
     return build_server(settings, lambda: retriever)
 
 

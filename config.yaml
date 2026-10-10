@@ -78,6 +78,7 @@ data:
   http_timeout_s: 60
 
 eval:
+  collection: movie_plots_eval          # the evaluation indexes the fixture here and never writes into qdrant.collection
   questions_path: src/movie_rag/eval/data/questions_v1.jsonl            # 40 questions, 10 per type (docs/EVAL_SET.md)
   generated_path: src/movie_rag/eval/data/questions_v1_generated.jsonl  # output of the paraphrase generator (needs a key)
   per_type: 10
@@ -89,6 +90,7 @@ eval:
   k_values: [1, 3, 5, 8]              # Hit@k cut-offs; the retrieval depth of a run is the largest (must fit mcp.max_top_k)
   reports_dir: reports                # eval_<mode>.json (make eval) and EVAL_RESULTS.md (make report) are written here
   readme_path: README.md              # make report also rewrites the block between the RESULTS markers in this file
+  overview_path: docs/SOLUTION_OVERVIEW.md   # ... and the two OVERVIEW blocks (quality, speed) of the stakeholder overview
   smoke_min_mrr: 0.5                  # make eval-smoke fails when a mode's MRR over the answerable questions is below this
   smoke_llm_per_type: 2               # make eval-smoke LLM=1 asks the agent this many questions of each type
   ragas_concurrency: 4                # RAGAS metric calls in flight at once (judge API requests)

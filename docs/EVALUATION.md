@@ -14,8 +14,12 @@ the 40 questions of [`EVAL_SET.md`](EVAL_SET.md) and, when a key exists, the age
 | `make eval-smoke LLM=1` | Adds a small sample (`eval.smoke_llm_per_type` questions per type) through the agent and RAGAS; prints a skip notice and exits 0 without a key. The second form CI calls. |
 | `make report` | Renders `reports/EVAL_RESULTS.md` from the `eval_<mode>.json` files (and only from them). |
 
-Everything needs the Qdrant **service** (`make up`, or `QDRANT_URL`). The evaluator ingests the fixture itself when the
-gold films are not in the collection (ingestion is idempotent), so a fresh Qdrant works. It refuses the in-process
+Everything needs the Qdrant **service** (`make up`, or `QDRANT_URL`). The evaluator works in its own collection
+(`eval.collection`, default `movie_plots_eval`; never `qdrant.collection`, so a real index is not touched) and ingests the
+fixture there itself when the gold films are missing (ingestion is idempotent), so a fresh Qdrant works. It refuses, with
+an `EvalError` and nothing written, to ingest into a non-empty collection that holds films other than the fixture's
+(for example `eval.collection` set to a real index). The reports record the collection and how many points are not
+fixture films (`index.other_points`), and the generated captions are derived from that. It refuses the in-process
 `:memory:` engine: qdrant-client 1.15.1's local engine ignores the prefetch queries and filters of grouped hybrid
 queries, so hybrid numbers from it would be wrong (docs/BACKLOG.md, PR-04 and PR-08 QA m7).
 
