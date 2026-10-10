@@ -41,8 +41,9 @@ sparse mode use the same call with one named vector, so there is a single retrie
   filters of grouped hybrid queries** (observed in PR-04 and PR-08). Hybrid behaviour is therefore only verified
   against the real service: `tests/integration/test_retrieval_qdrant.py` runs when `QDRANT_URL` is set (CI), and the
   evaluator refuses the in-memory engine for hybrid numbers. Unit tests cover hybrid by request shape.
-* Server and client versions are coupled: the compose and CI tag is `v1.15.4` and `uv.lock` pins qdrant-client 1.15.1.
-  Features added later (parametric RRF in 1.16, weighted RRF in 1.17) need both bumped (ADR 002).
+* The compose and CI tag is `v1.15.4` and `uv.lock` pins qdrant-client 1.15.1. Parametric RRF needs only a newer
+  client (1.16 for `RrfQuery`): the 1.15.4 server already accepts `rrf.k` over REST (ADR 002). Weighted RRF is
+  documented as of 1.17 and would need both bumped.
 * Qdrant 1.15.4 also pushes a top-level filter down into prefetches. The code attaches the filter to each prefetch
   explicitly instead of relying on that undocumented behaviour.
 * `get_movie` by title is an unindexed payload match (fine for the fixture, untimed on 35,000 films; backlog).

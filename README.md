@@ -7,6 +7,10 @@ server, consumed by a LangChain agent, with a Streamlit test page and a RAGAS ev
 Everything up to retrieval, the MCP server, the test page and the retrieval metrics runs **without any API key**. Only
 the LLM answers and the RAGAS scores need one (see [What needs a key](#what-needs-a-key)).
 
+Guides: [`docs/SOLUTION_OVERVIEW.md`](docs/SOLUTION_OVERVIEW.md) (plain-language overview, no AI background needed),
+[`docs/DEMO.md`](docs/DEMO.md) (2-minute script for the test page) and [`docs/CREDENTIALS.md`](docs/CREDENTIALS.md)
+(keys and the full-results run).
+
 ## Architecture
 
 ```mermaid
@@ -24,7 +28,7 @@ flowchart LR
     end
     RET -->|"one Query API call"| QD
     AG["LangChain agent<br/>(make ask)"] -->|"langchain-mcp-adapters"| TOOLS
-    AG -->|"OpenAI-compatible API"| NEB["Nebius Token Factory<br/>chat + judge models"]
+    AG -.->|"OpenAI-compatible API"| NEB["Nebius Token Factory<br/>chat + judge models"]
     UI["Streamlit page<br/>(make ui)"] -->|"retrieval only: no key"| TOOLS
     UI -.->|"agent mode"| AG
     EV["Eval runner<br/>(make eval)"] -->|"in-process MCP client"| TOOLS
@@ -73,8 +77,9 @@ tests with the 80% coverage gate), `make eval && make report` (retrieval metrics
 | The real 35k-film dataset (`make download`) | `KAGGLE_USERNAME`, `KAGGLE_KEY` | prints what to set; `make ingest` uses the synthetic fixture |
 | LangSmith traces and experiments | `LANGSMITH_API_KEY`, `LANGSMITH_TRACING` | tracing is a no-op with identical code paths |
 
-The credentials guide (`docs/CREDENTIALS.md`) is coming in PR-11; until then the variable names are in `.env.example`
-and the tunables in [`config.yaml`](config.yaml). Development and CI use the synthetic
+Where to create each key, where to put it and the command sequence for the real results:
+[`docs/CREDENTIALS.md`](docs/CREDENTIALS.md). The variable names are in `.env.example` and the tunables in
+[`config.yaml`](config.yaml). Development and CI use the synthetic
 [`tests/fixtures/movies_sample.csv`](tests/fixtures/README.md); the real dataset and its licence are described in
 [`docs/DATASET.md`](docs/DATASET.md).
 
