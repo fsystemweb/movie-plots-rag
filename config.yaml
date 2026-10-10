@@ -77,6 +77,16 @@ data:
   max_extracted_mb: 1000   # cap on the unzipped CSV, counted while writing (zip-bomb guard)
   http_timeout_s: 60
 
+eval:
+  questions_path: src/movie_rag/eval/data/questions_v1.jsonl            # 40 questions, 10 per type (docs/EVAL_SET.md)
+  generated_path: src/movie_rag/eval/data/questions_v1_generated.jsonl  # output of the paraphrase generator (needs a key)
+  per_type: 10
+  ngram_size: 4                       # overlap guard: no shared run of this many words between a fuzzy question and its plot
+  paraphrase_prompt_version: paraphrase_v1
+  generate_count: 10                  # fuzzy questions per generator run (sampled with ingest.random_seed)
+  max_attempts: 3                     # model calls per film before it is rejected and the next sampled film is tried
+  dataset_name: movie-plots-questions-v1   # LangSmith dataset (bump the suffix when the question set changes)
+
 doctor:
   http_timeout_s: 5
   docker_timeout_s: 10

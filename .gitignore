@@ -5,6 +5,8 @@
 
 # data and logs
 data/
+!src/movie_rag/eval/data/
+src/movie_rag/eval/data/*_generated.jsonl
 logs/
 
 # claude runtime state
