@@ -79,3 +79,9 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-09] `reports/eval_<mode>.json` carry `git_sha` of HEAD at run time and a timestamp, so every re-run changes the committed files; regenerate them only when the code or the question set changes.
 - [PR-09] `make eval-smoke LLM=1` runs the agent over `eval.smoke_llm_per_type` questions per type for all three modes (24 agent calls with the default 2); lower it if the CI key's rate limit is tight.
 - [PR-09] The LLM half of `make eval` is attempted whenever `NEBIUS_API_KEY` is set; there is no `--max-questions` for it beyond `LLM=0`.
+- [PR-09 QA] Hybrid rankings below the top still vary between identical calls (Qdrant breaks ties inside each prefetch before fusion; 8/40 questions vary). Metrics are tie-aware; a stable ranking needs client-side fusion with a stable tie-break.
+- [PR-09 QA m4] A tie group cut off at the retrieval depth is judged by its visible part only (documented).
+- [PR-09 QA m6] `docs/prs/PR-09.md` follow-ups still say "no deterministic tie-break in the retrieval layer"; align with backlog wording.
+- [PR-09 QA m7] `tests/unit/test_eval_cli.py:66` assertion passes for either label; check `"not requested" in out` directly.
+- [PR-09] ragas forces downgrades in the single lock (openai 3.28→3.3, rich 15→14.3.4, jiter 0.17→0.14, fsspec 2026.9→2026.7) that the server image also gets; revisit when instructor/datasets release.
+- [PR-09] Test suite ~281 s locally (stop-gate timeout 540 s); keep new tests cheap.
