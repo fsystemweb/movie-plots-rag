@@ -20,7 +20,7 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-03 QA m4] Token counting uses an internal FastEmbed call (`ingest/embed.py:83`) with no upper version pin on fastembed.
 - [Orchestrator] `.claude/settings.json` deny rule `Read(./.env.*)` also blocks reading `.env.example`; human decision pending on adding an allow rule.
 - [Orchestrator] CI pulls `qdrant/qdrant` anonymously and hits Docker Hub rate limits (PR #3 needed many reruns); human to add `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` secrets and `credentials:` on the qdrant services.
-- [PR-04] `rrf_k` was removed from `config.yaml`: qdrant-client 1.15.1 / Qdrant 1.15.4 only offer plain `Fusion.RRF`. Upgrading both to 1.16 allows `RrfQuery(rrf=Rrf(k=...))` and a `retrieval.rrf_k` setting again (the CI/compose image tag is protected/pinned).
+- [PR-04] `rrf_k` was removed from `config.yaml`: qdrant-client 1.15.1 has no `RrfQuery`, so only plain `Fusion.RRF` (server default k=2) can be sent. Qdrant server 1.15.4 already accepts `{"rrf":{"k":K}}`; upgrading the client to ≥1.16 allows `RrfQuery(rrf=Rrf(k=...))` and a `retrieval.rrf_k` setting again (no image-tag change needed).
 - [PR-04] qdrant-client 1.15.1's in-memory engine drops the prefetch queries and filters in `query_points_groups` (`local_collection.set_prefetch_limit_recursively`), so hybrid behaviour is only tested against a real server (`tests/integration/test_retrieval_qdrant.py`, runs in CI where `QDRANT_URL` is set); without `QDRANT_URL` those tests cover dense and sparse only.
 - [PR-04] Qdrant 1.15.4 also pushes a top-level filter down into prefetches (observed, not documented), so the "filter only on the fused query" shape cannot be shown to fail; the per-prefetch filter is kept for being explicit and version-independent, and is asserted by a request-shape test.
 - [PR-04] Sparse mode returns fewer than `top_k` films when fewer chunks share a term with the query (BM25 gives non-matching chunks no score); the eval (PR-09) should expect that.
@@ -90,3 +90,10 @@ Follow-ups moved out of PRs. One bullet per item: `- [PR-NN] description`.
 - [PR-10] ADR 003 records the fixture's chunk statistics only; the plot-length distribution (and chunk count) of the 35k-film dataset is unmeasured until `make download && make ingest` runs with Kaggle credentials.
 - [PR-10] README and ADR 002 now state the PR-04 QA m1 facts (effective RRF k = 2; the limit is the client); the actual fix (bump qdrant-client to >= 1.16, add `retrieval.rrf_k`, re-run `make eval`) is still open. PR-09 QA m6 (wording in `docs/prs/PR-09.md`) and m7 (`test_eval_cli.py` assertion) are fixed.
 - [PR-10] The README's quickstart links `docs/CREDENTIALS.md` as "coming in PR-11"; replace with a live link when PR-11 lands.
+- [PR-10 QA m1] `docs/adr/001-qdrant.md:44-45` and `docs/prs/PR-04.md:94` still say parametric RRF needs a server upgrade; only the client needs ≥1.16 (ADR 002 is correct).
+- [PR-10 QA m2] ADR 002:38-39 example holds for any k>1; use an example that depends on k.
+- [PR-10 QA m3] README Mermaid legend (line 40) says solid arrows need no credentials but agent→Nebius (line 27) is solid; make it dashed.
+- [PR-10 QA m4] `tests/unit/test_readme_results.py:31-32` stray-metric check misses percentages and bare two-decimal figures.
+- [PR-10 QA m5] `render_readme_block` (`eval/report.py`) selects LLM rows by positional `[:7]` slice; select by key.
+- [PR-10] `docker-compose.yml` fixes `container_name`; a second checkout under another folder name collides with a running stack.
+- [PR-10 QA] `make check` measured 6m53s under contention (pytest 406 s) vs 540 s builder stop-gate; keep PR-11 tests cheap.
